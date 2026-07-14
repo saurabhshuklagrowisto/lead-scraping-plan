@@ -107,6 +107,38 @@
   .trend .barv{width:100%;max-width:64px;border-radius:8px 8px 0 0;}
   .muted{color:var(--faint);font-size:12px;}
   .quote{font-size:12px;color:var(--mid);font-style:italic;border-left:2px solid var(--line2);padding-left:9px;margin-top:6px;}
+  .hero{background:linear-gradient(135deg,#e8f0ff,#eef4ff 55%,#f4f7fc);border:1px solid #d9e5ff;border-radius:16px;padding:20px 20px 18px;margin:6px 0 16px;box-shadow:var(--shadow);}
+  .hero .eyebrow{display:inline-flex;align-items:center;gap:7px;font-size:11px;font-weight:800;letter-spacing:.05em;color:var(--blue-dk);background:#fff;border:1px solid #cfe0ff;padding:5px 11px;border-radius:20px;text-transform:uppercase;}
+  .hero .big{font-size:clamp(26px,5vw,34px);font-weight:800;letter-spacing:-.02em;margin:12px 0 4px;}
+  .hero .tl2{color:var(--mid);font-size:14px;margin-bottom:14px;}
+  .hero .metastrip{display:grid;grid-template-columns:1fr;gap:8px;margin-top:14px;}
+  @media(min-width:700px){.hero .metastrip{grid-template-columns:repeat(3,1fr);}}
+  .hero .ms{background:rgba(255,255,255,.7);border:1px solid #e0e9f8;border-radius:11px;padding:10px 12px;font-size:12.5px;color:var(--mid);display:flex;align-items:center;gap:8px;}
+  .idle{margin-left:auto;font-size:11px;font-weight:700;color:var(--faint);background:#fff;border:1px solid var(--line);padding:5px 11px;border-radius:20px;}
+  .glance{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
+  @media(min-width:560px){.glance{grid-template-columns:repeat(3,1fr);}}
+  @media(min-width:900px){.glance{grid-template-columns:repeat(6,1fr);}}
+  .gc{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:13px 14px;box-shadow:var(--shadow);}
+  .gc .gt{display:flex;justify-content:space-between;align-items:center;}
+  .gc .lab{font-size:10px;font-weight:800;letter-spacing:.04em;color:var(--faint);text-transform:uppercase;}
+  .gc .ic{width:26px;height:26px;border-radius:8px;background:var(--tint);display:flex;align-items:center;justify-content:center;font-size:14px;}
+  .gc .n{font-size:24px;font-weight:800;margin:6px 0 2px;}
+  .gc .d{font-size:11px;color:var(--faint);}
+  .seg{display:inline-flex;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden;}
+  .seg button{border:none;background:none;padding:7px 13px;font:inherit;font-weight:700;font-size:12px;color:var(--mid);cursor:pointer;}
+  .seg button.on{background:var(--blue);color:#fff;}
+  .status{font-size:10px;font-weight:800;padding:3px 9px;border-radius:20px;white-space:nowrap;display:inline-flex;align-items:center;gap:5px;}
+  .status.won{background:var(--green-lt);color:var(--green);} .status.cold{background:var(--blue-lt);color:var(--blue-dk);} .status.lost{background:var(--red-lt);color:var(--red);} .status.active{background:var(--amber-lt);color:var(--amber);}
+  .status .d2{width:7px;height:7px;border-radius:50%;background:currentColor;}
+  .lead-row{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:13px 15px;margin-bottom:8px;display:flex;align-items:center;gap:12px;cursor:pointer;box-shadow:var(--shadow);}
+  .lead-row:hover{border-color:var(--blue);}
+  .lead-row .co{font-weight:700;color:var(--ink);} .lead-row .u{font-size:11.5px;color:var(--faint);}
+  .tabs2{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;}
+  .tabs2 button{font:inherit;font-weight:700;font-size:12.5px;color:var(--mid);background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:8px 13px;cursor:pointer;}
+  .tabs2 button.on{background:var(--blue-lt);color:var(--blue-dk);border-color:var(--blue);}
+  .timeline-card{display:flex;gap:12px;padding:13px 0;border-bottom:1px solid var(--line);}
+  .timeline-card:last-child{border:none;} .timeline-card .ti{width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+  .timeline-card .when{font-size:11px;font-weight:800;color:var(--blue-dk);}
   .tabbar{position:fixed;bottom:0;left:0;right:0;z-index:30;background:rgba(255,255,255,.96);backdrop-filter:blur(12px);border-top:1px solid var(--line);display:flex;overflow-x:auto;padding:6px 2px 9px;}
   .tabbar button{flex:1;min-width:64px;background:none;border:none;color:var(--faint);font:inherit;font-size:10px;font-weight:700;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 2px;cursor:pointer;}
   .tabbar button.on{color:var(--blue);}
@@ -158,24 +190,43 @@ function Card({l,onClick}){
       ${PRI.has(l.company)&&html`<span className="tag pri">★ priority</span>`}
       ${l.remote==="explicit-remote"&&html`<span className="tag">remote</span>`}</div></div>`;}
 
+const TIMELINES=[
+  ["⚡","Speed sweep","Every 3 hours","var(--red-lt)","Priority signals only — companies posting 3+ roles or multi-location. Small, fast pass so hot accounts get a same-day touch (speed-to-lead).","~15–30 postings"],
+  ["📅","Daily core","06:00 ET daily","var(--blue-lt)","The main engine — all 25 target titles across Indeed + LinkedIn, US employers, postings ≤14 days old. Scores, size-gates, and queues everything that clears ≥70.","~250–300 postings"],
+  ["🗓️","Weekly deep","Sundays 07:00 ET","var(--green-lt)","Niche healthcare boards + free-board backfill, plus a full re-score of the nurture pool against the latest rubric version so learning improvements re-grade older leads.","nurture pool + backfill"]];
+
 function Pipeline({leads,setSel,go}){
   const s=D.stats;
-  const funnel=[["Scraped",s.total,"jobs ingested"],["Qualified ≥70",s.qualified,"passed the gate"],
-    ["Nurture 40–69",s.nurture,"softer track"],["Enriched",8,"NPPES + Clay (stub)"],["Sequenced",5,"draft"],["Replied",0,"awaiting keys"]];
-  const max=s.total;
+  const [win,setWin]=useState("24h");
+  const glance=[["Scraped",s.total,"jobs ingested","📥"],["Qualified",s.qualified,"passed ≥70 gate","✨"],
+    ["Nurture",s.nurture,"40–69 softer track","◐"],["Enriched",8,"NPPES + Clay","👥"],["Sequenced",5,"outreach queued","✉"],["Replied",0,"awaiting keys","✓"]];
   const acts=[["📥","259 postings scraped","Indeed · 14-day window · $0"],["🧠","Scored against QuickTeam rubric v1.0","10 qualified · 128 nurture"],
     ["🚪","NPPES size gate ran","hospitals/large orgs excluded, free"],["✅","Eval promoted v1.0 over baseline","77% vs 67% on the 61 holdout"],
     ["✍️","5 sequences drafted (DRY-RUN)","Sonnet · cluster-routed"]];
   const qualified=leads.filter(l=>l.verdict==="qualified");
   const priorityLeads=leads.filter(l=>PRI.has(l.company)&&l.verdict!=="disqualified").slice(0,6);
   return html`<div>
-    <h2>Pipeline</h2>
-    <div className="lead">Signal-scored healthcare-admin postings, re-oriented for QuickTeam's buyer ICP.</div>
-    <div className="chips">
-      <${Chip} n=${s.total} l="Scraped (14-day)" cls="b"/><${Chip} n=${s.qualified} l="Qualified ≥70" cls="g"/>
-      <${Chip} n=${s.nurture} l="Nurture 40–69" cls="a"/><${Chip} n=${s.priority_companies.length} l="Priority accounts" cls="r"/></div>
-    <div className="panel"><h3>Funnel</h3><div className="funnel">${funnel.map(f=>html`<div className="fr" key=${f[0]}>
-      <div className="flabel">${f[0]}</div><div className="ftrack"><i style=${{width:Math.max(4,100*f[1]/max)+"%"}}></i></div><div className="fnum">${f[1]}</div></div>`)}</div></div>
+    <div className="hero">
+      <div className="row"><span className="eyebrow"><span className="d2" style=${{width:7,height:7,borderRadius:"50%",background:"var(--green)",display:"inline-block"}}></span> Agentic pipeline · Dry run</span><span className="idle">● Pipeline idle</span></div>
+      <div className="big">QuickTeam Outbound</div>
+      <div className="tl2">Signal-scored healthcare-admin postings, re-oriented for QuickTeam's buyer ICP.</div>
+      <div className="row"><button className="btn primary" onClick=${()=>go("jobs")}>⚡ Run scrape now →</button><button className="btn" onClick=${()=>go("jobs")}>Browse jobs</button></div>
+      <div className="metastrip">
+        <div className="ms">🌐 Indeed + LinkedIn · US employers</div>
+        <div className="ms">✨ Claude-scored VA fit (≥70 gate)</div>
+        <div className="ms">⏱ 3 scraping timelines · see below</div></div></div>
+
+    <div className="row" style=${{justifyContent:"space-between",margin:"4px 0 10px"}}>
+      <div><div className="muted" style=${{fontWeight:800,letterSpacing:".04em"}}>LAST ${win.toUpperCase()}</div><h2 style=${{margin:"2px 0 0"}}>Pipeline at a glance</h2></div>
+      <div className="row"><button className="btn sm">↻ Refresh</button><div className="seg">${["24h","7d","30d"].map(w=>html`<button key=${w} className=${win===w?"on":""} onClick=${()=>setWin(w)}>${w}</button>`)}</div></div></div>
+    <div className="glance">${glance.map(g=>html`<div className="gc" key=${g[0]}><div className="gt"><span className="lab">${g[0]}</span><span className="ic">${g[3]}</span></div><div className="n" style=${{color:g[0]==="Qualified"?"var(--green)":g[0]==="Nurture"?"var(--amber)":"var(--ink)"}}>${g[1]}</div><div className="d">${g[2]}</div></div>`)}</div>
+
+    <div className="panel" style=${{marginTop:14}}><h3>Scraping timelines <span className="muted">· 3 cadences</span></h3>
+      ${TIMELINES.map((t,i)=>html`<div className="timeline-card" key=${i}><div className="ti" style=${{background:t[3]}}>${t[0]}</div>
+        <div style=${{flex:1}}><div className="row" style=${{justifyContent:"space-between"}}><span style=${{fontWeight:700,color:"var(--ink)"}}>${t[1]}</span><span className="when">${t[2]}</span></div>
+        <div className="muted" style=${{margin:"3px 0 4px",color:"var(--mid)"}}>${t[4]}</div><div className="muted">Volume: ${t[5]}</div></div></div>`)}
+      <div className="muted" style=${{marginTop:8}}>Each timeline runs the same scorer + NPPES gate; only the trigger, sources, and volume differ.</div></div>
+
     <div className="panel"><h3>Activity</h3><div className="feed">${acts.map((a,i)=>html`<div className="fi" key=${i}><span className="ic">${a[0]}</span><div><div className="t">${a[1]}</div><div className="m">${a[2]}</div></div></div>`)}</div></div>
     ${priorityLeads.length>0&&html`<div><div className="sec-h"><span className="dot" style=${{background:"var(--amber)"}}></span>Priority accounts — one convo, multiple placements</div>
       <div className="grid">${priorityLeads.map(l=>html`<${Card} key=${l.id} l=${l} onClick=${()=>setSel(l)}/>`)}</div></div>`}
@@ -265,13 +316,17 @@ function Learning(){
 
 function Outreach({leads}){
   const seq=leads.filter(l=>l.verdict==="qualified").slice(0,8);
+  const [tab,setTab]=useState("queue");
+  const buckets={queue:seq,sent:[],bounced:[],replied:[]};
+  const rows=buckets[tab];
   return html`<div><h2>Outreach</h2>
     <div className="lead">Cluster-routed 5-touch sequences via SalesBlink (DRY-RUN) → replies sync to Close. Verify → send → sequence.</div>
-    <div className="chips"><${Chip} n=${seq.length} l="Queued (draft)" cls="b"/><${Chip} n="0" l="Sent" cls="a"/><${Chip} n="0" l="Replied" cls="g"/><${Chip} n="0" l="Bounced" cls="r"/></div>
-    <div className="panel"><h3>Sequence queue</h3><div className="tbl-scroll"><table><thead><tr><th>Company</th><th>Cluster</th><th>Touches</th><th>Status</th></tr></thead>
-      <tbody>${seq.map(l=>html`<tr key=${l.id}><td><div style=${{color:"var(--ink)",fontWeight:600}}>${l.company}</div><div className="muted">${l.title}</div></td>
-        <td><span className="tag cl">${cluster(l.title)}</span></td><td>5</td><td><span className="pill cand">draft · DRY-RUN</span></td></tr>`)}</tbody></table></div>
-      <div className="muted" style=${{marginTop:10}}>Sending is off until SalesBlink + Cleanlist keys are added — nothing sends or spends.</div></div></div>`;}
+    <div className="tabs2">${[["queue","Queue"],["sent","Sent"],["bounced","Bounced"],["replied","Replied"]].map(t=>html`<button key=${t[0]} className=${tab===t[0]?"on":""} onClick=${()=>setTab(t[0])}>${t[1]} (${buckets[t[0]].length})</button>`)}</div>
+    <div className="tbl-scroll"><table><thead><tr><th>Company</th><th>Cluster</th><th>Touches</th><th>Status</th></tr></thead>
+      <tbody>${rows.length?rows.map(l=>html`<tr key=${l.id}><td><div style=${{color:"var(--ink)",fontWeight:600}}>${l.company}</div><div className="muted">${l.title}</div></td>
+        <td><span className="tag cl">${cluster(l.title)}</span></td><td>5</td><td><span className="pill cand">draft · DRY-RUN</span></td></tr>`)
+        :html`<tr><td colSpan="4" style=${{textAlign:"center",padding:"26px",color:"var(--faint)"}}>No emails in ${tab} — sending is off until SalesBlink + Cleanlist keys are added.</td></tr>`}</tbody></table></div>
+    <div className="muted" style=${{marginTop:10}}>Nothing sends or spends in DRY-RUN. Each queued lead has a full 5-touch, cluster-routed sequence ready to approve.</div></div>`;}
 
 function Tools(){
   const t=[["JobSpy (Indeed)","live","free"],["LinkedIn actor","stub","needs key"],["NPPES size gate","live","free gov API"],["Claude Haiku/Sonnet","stub","needs key (cached)"],
@@ -365,20 +420,29 @@ function Sheet({l,onClose,fb,setFb}){
       <div className="quote">"Saw ${l.company} is hiring a ${l.title.toLowerCase()} — the ramp on that seat is usually the hidden cost. We place trained, HIPAA-ready VAs for it at ~40–60% less. If it's an hourly role, worth a quick cost comparison?"</div></div>
     <div className="row"><button className="btn primary" style=${{flex:1}}>Approve → SalesBlink (DRY-RUN)</button><button className="btn">Push to Close</button></div></div></div>`;}
 
+const STATUS={new:["Cold Leads","cold"],contacted:["Active","active"],replied:["Active","active"],meeting:["Active","active"],won:["Closed Won","won"],lost:["Lost","lost"]};
 function CRM({setSel}){
   const leads=useMemo(crmLeads,[]);
+  const [q,setQ]=useState("");
   const byStage=s=>leads.filter(l=>l.stage===s);
   const open=leads.filter(l=>!["won","lost"].includes(l.stage)).length;
   const won=byStage("won").length;
+  const rows=leads.filter(l=>!q||(l.title+" "+l.company).toLowerCase().includes(q.toLowerCase()));
   return html`<div><h2>CRM</h2>
-    <div className="lead">Booked replies sync to Close CRM with full context. Pipeline stages, contacts, activity, and tasks per lead.</div>
+    <div className="lead">Booked replies sync to Close with full context — leads, contacts, activities, stages.</div>
     <div className="chips"><${Chip} n=${open} l="Open in pipeline" cls="b"/><${Chip} n=${byStage("meeting").length} l="Meetings booked" cls="a"/><${Chip} n=${won} l="Won (VA seats)" cls="g"/><${Chip} n=${"$"+(won*7200).toLocaleString()} l="Est. booked value" cls="g"/></div>
-    ${STAGES.map(st=>{const items=byStage(st[0]); if(!items.length) return null; return html`<div key=${st[0]}>
+    <div className="panel" style=${{padding:"14px 16px"}}><div className="row" style=${{justifyContent:"space-between"}}><div><span style=${{fontWeight:800}}>Close CRM</span> <span className="pill cand">${leads.length} leads</span></div></div>
+      <div className="tbl-tools" style=${{marginTop:12,marginBottom:0}}>
+        <input className="search" placeholder="Search leads…" value=${q} onInput=${e=>setQ(e.target.value)}/>
+        <button className="btn primary sm">+ New Lead</button><button className="btn sm">⤒ Import CSV</button></div></div>
+    ${STAGES.map(st=>{const items=rows.filter(l=>l.stage===st[0]); if(!items.length) return null; const stt=STATUS[st[0]]; return html`<div key=${st[0]}>
       <div className="sec-h"><span className="dot" style=${{background:st[2]}}></span>${st[1]} <span className="muted" style=${{fontWeight:600}}>(${items.length})</span></div>
-      <div className="grid">${items.map(l=>html`<div key=${l.id} className="card" onClick=${()=>setSel(l)}>
-        <div className="r1"><div><div className="co">${l.company}</div><div className="ti">${l.title}</div></div><div className="score" style=${{color:scoreColor(l.score)}}>${l.score}</div></div>
-        <div className="tags"><span className="tag cl">${cluster(l.title)}</span><span className="tag">${l.size}</span>${PRI.has(l.company)&&html`<span className="tag pri">★</span>`}</div></div>`)}</div></div>`;})}
-    <div className="muted" style=${{marginTop:8}}>Demo pipeline (DRY-RUN) — real stages populate once SalesBlink replies and Close sync are live.</div></div>`;}
+      ${items.map(l=>html`<div key=${l.id} className="lead-row" onClick=${()=>setSel(l)}>
+        <div style=${{flex:1,minWidth:0}}><div className="co">${l.company}</div><div className="u">${l.title}</div></div>
+        <span className="muted" style=${{whiteSpace:"nowrap"}}>${contactsFor(l).length} contact${contactsFor(l).length>1?"s":""}</span>
+        <span className=${"status "+stt[1]}>${stt[1]==="won"||stt[1]==="active"?html`<span className="d2"></span>`:""}${stt[0]}</span>
+        <span className="muted">›</span></div>`)}</div>`;})}
+    <div className="muted" style=${{marginTop:8}}>Demo pipeline (DRY-RUN) — real leads sync once SalesBlink replies + Close are connected.</div></div>`;}
 
 function Toggle({on}){return html`<span style=${{display:"inline-flex",width:38,height:22,borderRadius:20,background:on?"var(--green)":"var(--line2)",position:"relative",transition:".15s"}}><span style=${{position:"absolute",top:2,left:on?18:2,width:18,height:18,borderRadius:"50%",background:"#fff",transition:".15s",boxShadow:"0 1px 2px rgba(0,0,0,.2)"}}></span></span>;`}
 function Settings(){

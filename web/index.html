@@ -210,8 +210,12 @@ function Pipeline({leads,setSel,go}){
     ["✅","Eval vs old AI on 61 human labels","77% vs 67% agreement · candidate promoted"],
     ["🚪","NPPES size gate + Clay enrichment","not run yet — pending API keys (DRY-RUN)"],
     ["✉️","SalesBlink / Cleanlist outreach","not run yet — pending keys (DRY-RUN)"]];
-  const qualified=leads.filter(l=>l.verdict==="qualified");
-  const priorityAccts=ACCOUNTS.filter(a=>a.priority).slice(0,6);
+  const priorityAccts=ACCOUNTS.filter(a=>a.priority&&a.accountScore>=40);      // viable 3+-role accounts (excludes disqualified hospitals like Johns Hopkins/Banner)
+  const uniqueQual=ACCOUNTS.filter(a=>a.accountScore>=70&&!a.priority);        // single-role qualified accounts
+  const acctCard=a=>html`<div key=${a.id} className="card" onClick=${()=>setSel(a)}>
+    <div className="r1"><div><div className="co">${a.company} · ${a.location||"US"}</div><div className="ti">${a.roleCount} open role${a.roleCount>1?"s":""}</div></div><div className="score" style=${{color:scoreColor(a.accountScore)}}>${a.accountScore}</div></div>
+    <div className="bar"><i style=${{width:a.accountScore+"%",background:scoreColor(a.accountScore)}}></i></div>
+    <div className="tags">${a.priority?html`<span className="tag pri">★ priority</span>`:""}${[...new Set(a.roles.map(r=>cluster(r.title)))].slice(0,3).map(c=>html`<span key=${c} className="tag cl">${c}</span>`)}</div></div>`;
   return html`<div>
     <div className="hero">
       <div className="row"><span className="eyebrow"><span className="d2" style=${{width:7,height:7,borderRadius:"50%",background:"var(--green)",display:"inline-block"}}></span> Agentic pipeline · Dry run</span><span className="idle">● Pipeline idle</span></div>
@@ -235,14 +239,12 @@ function Pipeline({leads,setSel,go}){
       <div className="muted" style=${{marginTop:8}}>Each timeline runs the same scorer + NPPES gate; only the trigger, sources, and volume differ.</div></div>
 
     <div className="panel"><h3>Activity</h3><div className="feed">${acts.map((a,i)=>html`<div className="fi" key=${i}><span className="ic">${a[0]}</span><div><div className="t">${a[1]}</div><div className="m">${a[2]}</div></div></div>`)}</div></div>
-    ${priorityAccts.length>0&&html`<div><div className="sec-h"><span className="dot" style=${{background:"var(--amber)"}}></span>Priority accounts — one convo, multiple placements</div>
-      <div className="grid">${priorityAccts.map(a=>html`<div key=${a.id} className="card" onClick=${()=>setSel(a)}>
-        <div className="r1"><div><div className="co">${a.company} · ${a.location||"US"}</div><div className="ti">${a.roleCount} open roles</div></div><div className="score" style=${{color:scoreColor(a.accountScore)}}>${a.accountScore}</div></div>
-        <div className="bar"><i style=${{width:a.accountScore+"%",background:scoreColor(a.accountScore)}}></i></div>
-        <div className="tags"><span className="tag pri">★ priority</span>${[...new Set(a.roles.map(r=>cluster(r.title)))].slice(0,3).map(c=>html`<span key=${c} className="tag cl">${c}</span>`)}</div></div>`)}</div></div>`}
-    <div className="sec-h"><span className="dot" style=${{background:"var(--green)"}}></span>Qualified (${qualified.length})
-      <button className="btn sm" style=${{marginLeft:"auto"}} onClick=${()=>go("jobs")}>See all ${REAL.scraped} →</button></div>
-    <div className="grid">${qualified.map(l=>html`<${Card} key=${l.id} l=${l} onClick=${()=>setSel(l)}/>`)}</div></div>`;}
+    ${priorityAccts.length>0&&html`<div><div className="sec-h"><span className="dot" style=${{background:"var(--amber)"}}></span>Priority accounts · 3+ roles (${priorityAccts.length}) — one convo, multiple placements</div>
+      <div className="grid">${priorityAccts.map(acctCard)}</div></div>`}
+    <div className="sec-h"><span className="dot" style=${{background:"var(--green)"}}></span>Qualified accounts · single role (${uniqueQual.length})
+      <button className="btn sm" style=${{marginLeft:"auto"}} onClick=${()=>go("jobs")}>All ${REAL.scraped} postings →</button></div>
+    <div className="grid">${uniqueQual.map(acctCard)}</div>
+    <div className="muted" style=${{marginTop:10}}>${priorityAccts.length+uniqueQual.length} target accounts (deduped) from ${REAL.scraped} postings · ${priorityAccts.length} with 3+ roles. Disqualified companies (e.g. hospitals) and pure nurture are in the CRM and Jobs views, not here.</div></div>`;}
 
 function Jobs({leads,setSel}){
   const [q,setQ]=useState(""); const [vf,setVf]=useState("all"); const [sort,setSort]=useState("score");
@@ -360,7 +362,9 @@ function Benchmark(){
     ["Clinical / hands-on","disqualify","disqualify (agree)"]];
   const parity=[["Scrape + score jobs","✓","✓"],["Per-job feedback","basic (unused)","✓ + reason tags + history"],
     ["Learning from feedback","prompt-stuffing, no gate","✓ eval-gated"],["Company size gate","✗","✓ free NPPES"],
-    ["CRM pipeline","✓ (Close tab)","✓"],["Outreach queue","✓","✓"],["Jobs table + export","✓","✓"],
+    ["Account de-duplication","✗ · one lead per posting","✓ one account, roles grouped"],
+    ["Multi-role priority scoring","✗","✓ 3+ roles → higher score"],
+    ["CRM pipeline","✓ (Close tab)","✓ account-centric"],["Outreach queue","✓","✓"],["Jobs table + export","✓","✓"],
     ["Settings / manual runs","✓","✓"],["Benchmark / accuracy view","✗","✓"],["Mobile-first","✗","✓"],["Run from Claude (MCP)","✗","✓"]];
   return html`<div><h2>Why ours is better</h2>
     <div className="lead">Measured on ${b.sample} real human-rated postings from the old dashboard. Same data — the difference is the objective.</div>
@@ -380,7 +384,7 @@ function Benchmark(){
       <div className="tbl-scroll"><table><thead><tr><th>Feature</th><th>Old app</th><th>Ours</th></tr></thead>
       <tbody>${parity.map((r,i)=>html`<tr key=${i}><td style=${{color:"var(--ink)",fontWeight:600}}>${r[0]}</td><td className="muted">${r[1]}</td><td style=${{color:"var(--green)",fontWeight:600}}>${r[2]}</td></tr>`)}</tbody></table></div></div>
     <div className="panel"><h3>Under the hood</h3>
-      ${[["One unified scorer","old: cron ran a keyword filter; the AI only ran on a manual button"],["Eval gate blocks regressions","old: no eval harness — learned rules shipped blind"],
+      ${[["Account-centric, zero duplicate leads","old: one lead per posting — same company repeated (206k+ leads); 3+ roles = higher score here"],["One unified scorer","old: cron ran a keyword filter; the AI only ran on a manual button"],["Eval gate blocks regressions","old: no eval harness — learned rules shipped blind"],
         ["First-class feedback + learning","old: 3 overwrite columns; unbounded rule blob; cron never scheduled"],["Free NPPES size gate before spend","old: none — a 2,000-person RCM firm slipped through"],
         ["Mobile-first + MCP","old: desktop-only; leaked a real email on a public endpoint"]].map((r,i)=>html`<div key=${i} className="kv"><span className="k">${r[1]}</span><span style=${{color:"var(--green)",fontWeight:700,minWidth:118,textAlign:"right"}}>${r[0]}</span></div>`)}</div></div>`;}
 
@@ -470,12 +474,13 @@ function Sheet({l,onClose,fb,setFb}){
 const STATUS={new:["Cold Leads","cold"],contacted:["Active","active"],replied:["Active","active"],meeting:["Active","active"],won:["Closed Won","won"],lost:["Lost","lost"]};
 function CRM({setSel}){
   const [q,setQ]=useState("");
-  const actionable=ACCOUNTS.filter(a=>a.accountScore>=70||a.priority);
+  const actionable=ACCOUNTS.filter(a=>a.accountScore>=70||(a.priority&&a.accountScore>=40)); // exclude disqualified (hospitals at 0)
+  const priorityViable=actionable.filter(a=>a.priority).length;
   const rows=actionable.filter(a=>!q||a.company.toLowerCase().includes(q.toLowerCase())||a.roles.some(r=>r.title.toLowerCase().includes(q.toLowerCase())));
   const openRoles=actionable.reduce((s,a)=>s+a.roleCount,0);
   return html`<div><h2>CRM</h2>
     <div className="lead">Account-centric (Salesforce-style): one account per company, its open roles grouped as opportunities. No duplicates. Counts are live from the scrape.</div>
-    <div className="chips"><${Chip} n=${actionable.length} l="Target accounts (deduped)" cls="g"/><${Chip} n=${REAL.priority} l="Priority · 3+ roles" cls="a"/><${Chip} n=${openRoles} l="Open roles across them" cls="b"/><${Chip} n="0" l="In outreach · DRY-RUN" cls="r"/></div>
+    <div className="chips"><${Chip} n=${actionable.length} l="Target accounts (deduped)" cls="g"/><${Chip} n=${priorityViable} l="Priority · 3+ roles" cls="a"/><${Chip} n=${openRoles} l="Open roles across them" cls="b"/><${Chip} n="0" l="In outreach · DRY-RUN" cls="r"/></div>
     <div className="panel" style=${{padding:"14px 16px"}}><div className="row" style=${{justifyContent:"space-between"}}><div><span style=${{fontWeight:800}}>Close CRM</span> <span className="pill cand">${actionable.length} accounts</span></div></div>
       <div className="tbl-tools" style=${{marginTop:12,marginBottom:0}}>
         <input className="search" placeholder="Search accounts…" value=${q} onInput=${e=>setQ(e.target.value)}/>

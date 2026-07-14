@@ -173,7 +173,12 @@ const cluster = t => { const s=(t||"").toLowerCase(); for(const [n,p] of CL){ if
 const LS="qt_feedback_v2";
 const loadFb=()=>{try{return JSON.parse(localStorage.getItem(LS))||{}}catch(e){return {}}};
 const saveFb=o=>localStorage.setItem(LS,JSON.stringify(o));
-const PRI=new Set(D.stats.priority_companies);
+// REAL priority accounts = companies with 3+ open postings in the scrape (the plan's rule). No estimates.
+const CCOUNT={}; D.leads.forEach(l=>{if(l.company&&l.company.trim())CCOUNT[l.company]=(CCOUNT[l.company]||0)+1;});
+const PRI=new Set(Object.keys(CCOUNT).filter(c=>CCOUNT[c]>=3));
+const REAL={scraped:D.leads.length,qualified:D.leads.filter(l=>l.verdict==="qualified").length,
+  nurture:D.leads.filter(l=>l.verdict==="deprioritized").length,disqualified:D.leads.filter(l=>l.verdict==="disqualified").length,
+  priority:new Set(Object.keys(CCOUNT).filter(c=>CCOUNT[c]>=3)).size,companies:Object.keys(CCOUNT).length};
 
 function Chip({n,l,cls}){return html`<div className=${"chip "+(cls||"")}><div className="n">${n}</div><div className="l">${l}</div></div>`;}
 function Reasons({text}){
@@ -196,13 +201,15 @@ const TIMELINES=[
   ["🗓️","Weekly deep","Sundays 07:00 ET","var(--green-lt)","Niche healthcare boards + free-board backfill, plus a full re-score of the nurture pool against the latest rubric version so learning improvements re-grade older leads.","nurture pool + backfill"]];
 
 function Pipeline({leads,setSel,go}){
-  const s=D.stats;
   const [win,setWin]=useState("24h");
-  const glance=[["Scraped",s.total,"jobs ingested","📥"],["Qualified",s.qualified,"passed ≥70 gate","✨"],
-    ["Nurture",s.nurture,"40–69 softer track","◐"],["Enriched",8,"NPPES + Clay","👥"],["Sequenced",5,"outreach queued","✉"],["Replied",0,"awaiting keys","✓"]];
-  const acts=[["📥","259 postings scraped","Indeed · 14-day window · $0"],["🧠","Scored against QuickTeam rubric v1.0","10 qualified · 128 nurture"],
-    ["🚪","NPPES size gate ran","hospitals/large orgs excluded, free"],["✅","Eval promoted v1.0 over baseline","77% vs 67% on the 61 holdout"],
-    ["✍️","5 sequences drafted (DRY-RUN)","Sonnet · cluster-routed"]];
+  // Real numbers only. Upstream (scrape/score/eval) has run; downstream is 0 because no keys are connected yet.
+  const glance=[["Scraped",REAL.scraped,"real · from the scrape","📥"],["Qualified",REAL.qualified,"score ≥70 · real","✨"],
+    ["Nurture",REAL.nurture,"40–69 · real","◐"],["Enriched",0,"pending Clay key","👥"],["Sequenced",0,"pending keys","✉"],["Replied",0,"pending keys","✓"]];
+  const acts=[["📥","Scraped & scored "+REAL.scraped+" postings","Indeed · 14-day window · $0 · real"],
+    ["🧠","Scored on QuickTeam rubric v1.0",REAL.qualified+" qualified · "+REAL.nurture+" nurture · "+REAL.disqualified+" disqualified"],
+    ["✅","Eval vs old AI on 61 human labels","77% vs 67% agreement · candidate promoted"],
+    ["🚪","NPPES size gate + Clay enrichment","not run yet — pending API keys (DRY-RUN)"],
+    ["✉️","SalesBlink / Cleanlist outreach","not run yet — pending keys (DRY-RUN)"]];
   const qualified=leads.filter(l=>l.verdict==="qualified");
   const priorityLeads=leads.filter(l=>PRI.has(l.company)&&l.verdict!=="disqualified").slice(0,6);
   return html`<div>
@@ -231,7 +238,7 @@ function Pipeline({leads,setSel,go}){
     ${priorityLeads.length>0&&html`<div><div className="sec-h"><span className="dot" style=${{background:"var(--amber)"}}></span>Priority accounts — one convo, multiple placements</div>
       <div className="grid">${priorityLeads.map(l=>html`<${Card} key=${l.id} l=${l} onClick=${()=>setSel(l)}/>`)}</div></div>`}
     <div className="sec-h"><span className="dot" style=${{background:"var(--green)"}}></span>Qualified (${qualified.length})
-      <button className="btn sm" style=${{marginLeft:"auto"}} onClick=${()=>go("jobs")}>See all 259 →</button></div>
+      <button className="btn sm" style=${{marginLeft:"auto"}} onClick=${()=>go("jobs")}>See all ${REAL.scraped} →</button></div>
     <div className="grid">${qualified.map(l=>html`<${Card} key=${l.id} l=${l} onClick=${()=>setSel(l)}/>`)}</div></div>`;}
 
 function Jobs({leads,setSel}){
@@ -315,7 +322,7 @@ function Learning(){
       <div className="muted" style=${{marginTop:8}}>Sonnet turns this into a candidate rule (pattern + weight). It must pass the eval gate before it scores a real lead.</div></div></div>`;}
 
 function Outreach({leads}){
-  const seq=leads.filter(l=>l.verdict==="qualified").slice(0,8);
+  const seq=leads.filter(l=>l.verdict==="qualified"); // real: qualified leads ready to sequence
   const [tab,setTab]=useState("queue");
   const buckets={queue:seq,sent:[],bounced:[],replied:[]};
   const rows=buckets[tab];
@@ -324,8 +331,8 @@ function Outreach({leads}){
     <div className="tabs2">${[["queue","Queue"],["sent","Sent"],["bounced","Bounced"],["replied","Replied"]].map(t=>html`<button key=${t[0]} className=${tab===t[0]?"on":""} onClick=${()=>setTab(t[0])}>${t[1]} (${buckets[t[0]].length})</button>`)}</div>
     <div className="tbl-scroll"><table><thead><tr><th>Company</th><th>Cluster</th><th>Touches</th><th>Status</th></tr></thead>
       <tbody>${rows.length?rows.map(l=>html`<tr key=${l.id}><td><div style=${{color:"var(--ink)",fontWeight:600}}>${l.company}</div><div className="muted">${l.title}</div></td>
-        <td><span className="tag cl">${cluster(l.title)}</span></td><td>5</td><td><span className="pill cand">draft · DRY-RUN</span></td></tr>`)
-        :html`<tr><td colSpan="4" style=${{textAlign:"center",padding:"26px",color:"var(--faint)"}}>No emails in ${tab} — sending is off until SalesBlink + Cleanlist keys are added.</td></tr>`}</tbody></table></div>
+        <td><span className="tag cl">${cluster(l.title)}</span></td><td>5</td><td><span className="pill cand">ready · not sent</span></td></tr>`)
+        :html`<tr><td colSpan="4" style=${{textAlign:"center",padding:"26px",color:"var(--faint)"}}>0 — sending is off (DRY-RUN) until SalesBlink + Cleanlist keys are added.</td></tr>`}</tbody></table></div>
     <div className="muted" style=${{marginTop:10}}>Nothing sends or spends in DRY-RUN. Each queued lead has a full 5-touch, cluster-routed sequence ready to approve.</div></div>`;}
 
 function Tools(){
@@ -382,8 +389,10 @@ const contactsFor=l=>{const h=hashInt(l.id);const solo=l.size==="solo-small";
   const c=[{name:firstNames[h%firstNames.length]+" "+["Ross","Kim","Nguyen","Adams","Lopez"][h%5],title:solo?"Owner / Practice Owner":"Practice Administrator",email:"owner@"+(l.company||"co").toLowerCase().replace(/[^a-z]/g,"").slice(0,12)+".com",phone:"+1 (5"+(h%90+10)+") 55"+(h%9)+"-0"+(h%89+10),linkedin:"linkedin.com/in/"+(l.company||"x").toLowerCase().replace(/[^a-z]/g,"").slice(0,10),conf:0.9,verified:true}];
   if(!solo)c.push({name:firstNames[(h+3)%firstNames.length]+" "+["Office Mgr"][0],title:"Office Manager",email:"office@"+(l.company||"co").toLowerCase().replace(/[^a-z]/g,"").slice(0,12)+".com",phone:"+1 (5"+(h%80+15)+") 55"+(h%8)+"-0"+(h%70+20),linkedin:"linkedin.com/in/officemgr",conf:0.72,verified:false});
   return c;};
-const crmLeads=()=>{const dist=[0,0,0,1,1,1,1,2,2,3,4,0,1,2,0,1,3,5];
-  return D.leads.filter(l=>l.verdict==="qualified"||PRI.has(l.company)).slice(0,18).map((l,i)=>({...l,stage:STAGES[dist[i%18]][0]}));};
+// Real: every qualified or priority lead, all at "new" — nothing has been contacted (DRY-RUN). No fabricated stages.
+const crmLeads=()=>{const seen=new Set();const out=[];
+  D.leads.forEach(l=>{if((l.verdict==="qualified"||PRI.has(l.company))&&!seen.has(l.id)){seen.add(l.id);out.push({...l,stage:"new"});}});
+  return out;};
 const activityFor=(l,stage)=>{const base=[["📥","Lead created from Indeed posting","2d ago"],["🚪","NPPES size check passed · solo-small","2d ago"],["✍️","5-touch sequence drafted (billing_rcm)","1d ago"]];
   const map={contacted:[["✉️","Touch 1 sent via SalesBlink","1d ago"]],replied:[["✉️","Touch 1 sent","1d ago"],["💬","Replied: 'tell me more'","4h ago"]],meeting:[["✉️","Touch 2 sent","1d ago"],["📞","Discovery call booked — Thu 2pm","2h ago"]],won:[["📞","Discovery call done","1d ago"],["🎉","Closed — 2 VA seats","3h ago"]],lost:[["✉️","3 touches sent","2d ago"],["🚫","No fit — using in-house","5h ago"]]};
   return base.concat(map[stage]||[]);};
@@ -424,14 +433,11 @@ const STATUS={new:["Cold Leads","cold"],contacted:["Active","active"],replied:["
 function CRM({setSel}){
   const leads=useMemo(crmLeads,[]);
   const [q,setQ]=useState("");
-  const byStage=s=>leads.filter(l=>l.stage===s);
-  const open=leads.filter(l=>!["won","lost"].includes(l.stage)).length;
-  const won=byStage("won").length;
   const rows=leads.filter(l=>!q||(l.title+" "+l.company).toLowerCase().includes(q.toLowerCase()));
   return html`<div><h2>CRM</h2>
-    <div className="lead">Booked replies sync to Close with full context — leads, contacts, activities, stages.</div>
-    <div className="chips"><${Chip} n=${open} l="Open in pipeline" cls="b"/><${Chip} n=${byStage("meeting").length} l="Meetings booked" cls="a"/><${Chip} n=${won} l="Won (VA seats)" cls="g"/><${Chip} n=${"$"+(won*7200).toLocaleString()} l="Est. booked value" cls="g"/></div>
-    <div className="panel" style=${{padding:"14px 16px"}}><div className="row" style=${{justifyContent:"space-between"}}><div><span style=${{fontWeight:800}}>Close CRM</span> <span className="pill cand">${leads.length} leads</span></div></div>
+    <div className="lead">Qualified + priority leads ready to sync to Close. Counts are live from the scrape — no estimates. Stages fill once outreach runs.</div>
+    <div className="chips"><${Chip} n=${REAL.qualified} l="Qualified, ready to sync" cls="g"/><${Chip} n=${REAL.priority} l="Priority accounts (3+ roles)" cls="a"/><${Chip} n="0" l="In outreach · DRY-RUN" cls="b"/><${Chip} n="0" l="Won / booked" cls="r"/></div>
+    <div className="panel" style=${{padding:"14px 16px"}}><div className="row" style=${{justifyContent:"space-between"}}><div><span style=${{fontWeight:800}}>Close CRM</span> <span className="pill cand">${leads.length} ready leads</span></div></div>
       <div className="tbl-tools" style=${{marginTop:12,marginBottom:0}}>
         <input className="search" placeholder="Search leads…" value=${q} onInput=${e=>setQ(e.target.value)}/>
         <button className="btn primary sm">+ New Lead</button><button className="btn sm">⤒ Import CSV</button></div></div>

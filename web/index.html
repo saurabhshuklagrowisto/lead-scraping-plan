@@ -211,7 +211,7 @@ function Pipeline({leads,setSel,go}){
     ["🚪","NPPES size gate + Clay enrichment","not run yet — pending API keys (DRY-RUN)"],
     ["✉️","SalesBlink / Cleanlist outreach","not run yet — pending keys (DRY-RUN)"]];
   const qualified=leads.filter(l=>l.verdict==="qualified");
-  const priorityLeads=leads.filter(l=>PRI.has(l.company)&&l.verdict!=="disqualified").slice(0,6);
+  const priorityAccts=ACCOUNTS.filter(a=>a.priority).slice(0,6);
   return html`<div>
     <div className="hero">
       <div className="row"><span className="eyebrow"><span className="d2" style=${{width:7,height:7,borderRadius:"50%",background:"var(--green)",display:"inline-block"}}></span> Agentic pipeline · Dry run</span><span className="idle">● Pipeline idle</span></div>
@@ -235,8 +235,11 @@ function Pipeline({leads,setSel,go}){
       <div className="muted" style=${{marginTop:8}}>Each timeline runs the same scorer + NPPES gate; only the trigger, sources, and volume differ.</div></div>
 
     <div className="panel"><h3>Activity</h3><div className="feed">${acts.map((a,i)=>html`<div className="fi" key=${i}><span className="ic">${a[0]}</span><div><div className="t">${a[1]}</div><div className="m">${a[2]}</div></div></div>`)}</div></div>
-    ${priorityLeads.length>0&&html`<div><div className="sec-h"><span className="dot" style=${{background:"var(--amber)"}}></span>Priority accounts — one convo, multiple placements</div>
-      <div className="grid">${priorityLeads.map(l=>html`<${Card} key=${l.id} l=${l} onClick=${()=>setSel(l)}/>`)}</div></div>`}
+    ${priorityAccts.length>0&&html`<div><div className="sec-h"><span className="dot" style=${{background:"var(--amber)"}}></span>Priority accounts — one convo, multiple placements</div>
+      <div className="grid">${priorityAccts.map(a=>html`<div key=${a.id} className="card" onClick=${()=>setSel(a)}>
+        <div className="r1"><div><div className="co">${a.company} · ${a.location||"US"}</div><div className="ti">${a.roleCount} open roles</div></div><div className="score" style=${{color:scoreColor(a.accountScore)}}>${a.accountScore}</div></div>
+        <div className="bar"><i style=${{width:a.accountScore+"%",background:scoreColor(a.accountScore)}}></i></div>
+        <div className="tags"><span className="tag pri">★ priority</span>${[...new Set(a.roles.map(r=>cluster(r.title)))].slice(0,3).map(c=>html`<span key=${c} className="tag cl">${c}</span>`)}</div></div>`)}</div></div>`}
     <div className="sec-h"><span className="dot" style=${{background:"var(--green)"}}></span>Qualified (${qualified.length})
       <button className="btn sm" style=${{marginLeft:"auto"}} onClick=${()=>go("jobs")}>See all ${REAL.scraped} →</button></div>
     <div className="grid">${qualified.map(l=>html`<${Card} key=${l.id} l=${l} onClick=${()=>setSel(l)}/>`)}</div></div>`;}
@@ -389,10 +392,29 @@ const contactsFor=l=>{const h=hashInt(l.id);const solo=l.size==="solo-small";
   const c=[{name:firstNames[h%firstNames.length]+" "+["Ross","Kim","Nguyen","Adams","Lopez"][h%5],title:solo?"Owner / Practice Owner":"Practice Administrator",email:"owner@"+(l.company||"co").toLowerCase().replace(/[^a-z]/g,"").slice(0,12)+".com",phone:"+1 (5"+(h%90+10)+") 55"+(h%9)+"-0"+(h%89+10),linkedin:"linkedin.com/in/"+(l.company||"x").toLowerCase().replace(/[^a-z]/g,"").slice(0,10),conf:0.9,verified:true}];
   if(!solo)c.push({name:firstNames[(h+3)%firstNames.length]+" "+["Office Mgr"][0],title:"Office Manager",email:"office@"+(l.company||"co").toLowerCase().replace(/[^a-z]/g,"").slice(0,12)+".com",phone:"+1 (5"+(h%80+15)+") 55"+(h%8)+"-0"+(h%70+20),linkedin:"linkedin.com/in/officemgr",conf:0.72,verified:false});
   return c;};
-// Real: every qualified or priority lead, all at "new" — nothing has been contacted (DRY-RUN). No fabricated stages.
-const crmLeads=()=>{const seen=new Set();const out=[];
-  D.leads.forEach(l=>{if((l.verdict==="qualified"||PRI.has(l.company))&&!seen.has(l.id)){seen.add(l.id);out.push({...l,stage:"new"});}});
-  return out;};
+// Salesforce-style: one ACCOUNT per company, with its open roles as opportunities. Dedupes multi-posting
+// companies (e.g. MedBill x3 -> one account, 3 roles) and boosts score — more open roles = hotter buying signal.
+const ROLE_BONUS=4; // +4 account-score per extra qualifying role (documented, capped) — a signal weight, not an estimate
+const buildAccounts=()=>{
+  const m={};
+  D.leads.forEach(l=>{const c=(l.company||"").trim(); if(!c) return;
+    (m[c]=m[c]||{company:c,location:l.location,size:l.size,roles:[]}).roles.push(l);});
+  return Object.values(m).map(a=>{
+    a.roles.sort((x,y)=>y.score-x.score);
+    a.roleCount=a.roles.length;
+    a.qualifying=a.roles.filter(r=>r.score>=40).length;
+    a.topScore=a.roles[0].score;
+    a.boost=ROLE_BONUS*Math.max(0,Math.min(a.qualifying-1,5));
+    a.accountScore=Math.min(100,a.topScore+a.boost);
+    a.priority=a.roleCount>=3;
+    a.bestVerdict=a.accountScore>=70?"qualified":a.accountScore>=40?"deprioritized":"disqualified";
+    a.contacts=contactsFor(a.roles[0]);
+    a.id="acct-"+a.company.toLowerCase().replace(/[^a-z0-9]/g,"").slice(0,18);
+    a.stage="new"; a.isAccount=true;
+    return a;
+  }).sort((x,y)=>y.accountScore-x.accountScore);
+};
+const ACCOUNTS=buildAccounts();
 const activityFor=(l,stage)=>{const base=[["📥","Lead created from Indeed posting","2d ago"],["🚪","NPPES size check passed · solo-small","2d ago"],["✍️","5-touch sequence drafted (billing_rcm)","1d ago"]];
   const map={contacted:[["✉️","Touch 1 sent via SalesBlink","1d ago"]],replied:[["✉️","Touch 1 sent","1d ago"],["💬","Replied: 'tell me more'","4h ago"]],meeting:[["✉️","Touch 2 sent","1d ago"],["📞","Discovery call booked — Thu 2pm","2h ago"]],won:[["📞","Discovery call done","1d ago"],["🎉","Closed — 2 VA seats","3h ago"]],lost:[["✉️","3 touches sent","2d ago"],["🚫","No fit — using in-house","5h ago"]]};
   return base.concat(map[stage]||[]);};
@@ -401,15 +423,29 @@ const FB_TAGS=["remote_ambiguity","size_misread","too_senior","clinical_role","u
 function Sheet({l,onClose,fb,setFb}){
   const [v,setV]=useState(null),[tags,setTags]=useState([]),[note,setNote]=useState(""),[saved,setSaved]=useState(false);
   useEffect(()=>{const e=l&&fb?fb[l.id]:null;setV(e?.v||null);setTags(e?.tags||[]);setNote(e?.note||"");setSaved(false);},[l&&l.id]);
-  if(!l) return null; const cl=cluster(l.title); const contacts=contactsFor(l); const stage=l.stage||"new"; const acts=activityFor(l,stage);
+  if(!l) return null;
+  const acct=!!l.roles;                       // account (deduped company) vs single posting
+  const heading=acct?l.company:l.title;
+  const score=acct?l.accountScore:l.score;
+  const verdict=acct?l.bestVerdict:l.verdict;
+  const cl=cluster(acct?l.roles[0].title:l.title);
+  const contacts=acct?l.contacts:contactsFor(l);
+  const acts=activityFor(acct?l.roles[0]:l,l.stage||"new");
   const existing=fb&&fb[l.id];
-  const save=()=>{const nf={...fb,[l.id]:{v,tags,note,at:Date.now(),title:l.title,company:l.company}};setFb(nf);saveFb(nf);setSaved(true);};
+  const kind=acct?"account":"job";
+  const save=()=>{const nf={...fb,[l.id]:{v,tags,note,at:Date.now(),title:heading,company:l.company}};setFb(nf);saveFb(nf);setSaved(true);};
   return html`<div className="modal" onClick=${onClose}><div className="sheet" onClick=${e=>e.stopPropagation()}>
-    <button className="x" onClick=${onClose}>×</button><div className="muted">${l.company} · ${l.location||"US"}</div>
-    <h2 style=${{marginTop:2}}>${l.title}</h2>
-    <div className="tags" style=${{margin:"8px 0 12px"}}><span className="tag cl">${cl}</span><span className="tag">${l.size}</span><span className="sc-badge" style=${{color:scoreColor(l.score),background:scoreBg(l.score)}}>score ${l.score} · ${vLabel(l.verdict)}</span>${l.stage&&html`<span className="pill cand">${STAGES.find(s=>s[0]===l.stage)[1]}</span>`}${existing&&html`<span className="pill g">✓ your feedback saved</span>`}</div>
-    <div className="panel"><h3>Why this score</h3><${Reasons} text=${l.reasons}/></div>
-    <div className="panel" style=${{borderColor:"var(--blue)",background:"var(--tint)"}}><h3>Your feedback on this job</h3>
+    <button className="x" onClick=${onClose}>×</button><div className="muted">${acct?"Account":"Job"} · ${l.location||"US"}</div>
+    <h2 style=${{marginTop:2}}>${heading}</h2>
+    <div className="tags" style=${{margin:"8px 0 12px"}}>${acct&&l.priority&&html`<span className="tag pri">★ ${l.roleCount} open roles</span>`}<span className="tag cl">${cl}</span><span className="tag">${l.size}</span><span className="sc-badge" style=${{color:scoreColor(score),background:scoreBg(score)}}>score ${score} · ${vLabel(verdict)}</span>${existing&&html`<span className="pill g">✓ feedback saved</span>`}</div>
+    ${acct?html`
+      <div className="panel"><h3>Open roles (${l.roleCount}) — opportunities</h3>
+        ${l.roles.map((r,i)=>html`<div key=${i} className="row" style=${{justifyContent:"space-between",padding:"8px 0",borderBottom:i<l.roles.length-1?"1px solid var(--line)":"none"}}>
+          <div style=${{flex:1,minWidth:0}}><div style=${{fontWeight:600,color:"var(--ink)"}}>${r.title}</div><div className="muted">${cluster(r.title)}</div></div>
+          <span className="sc-badge" style=${{color:scoreColor(r.score),background:scoreBg(r.score)}}>${r.score}</span></div>`)}
+        <div className="muted" style=${{marginTop:8}}>Account score ${score} = top role ${l.topScore}${l.boost?" + "+l.boost+" ("+(l.qualifying-1)+" more open roles = stronger buying signal)":""}. ${l.priority?"Priority: 3+ roles = one conversation, up to "+l.roleCount+" placements.":""}</div></div>`
+    :html`<div className="panel"><h3>Why this score</h3><${Reasons} text=${l.reasons}/></div>`}
+    <div className="panel" style=${{borderColor:"var(--blue)",background:"var(--tint)"}}><h3>Your feedback on this ${kind}</h3>
       <div className="verdict-btns">
         <button className=${"vb "+(v==="agree"?"sel good":"")} onClick=${()=>setV("agree")}>✓ Agree</button>
         <button className=${"vb "+(v==="too_high"?"sel bad":"")} onClick=${()=>setV("too_high")}>Too high</button>
@@ -426,29 +462,31 @@ function Sheet({l,onClose,fb,setFb}){
       <div className="muted" style=${{marginTop:6}}>Enriched via Clay waterfall (stub) · LinkedIn pulled per contact</div></div>
     <div className="panel"><h3>Activity</h3><div className="feed">${acts.map((a,i)=>html`<div className="fi" key=${i}><span className="ic">${a[0]}</span><div><div className="t">${a[1]}</div><div className="m">${a[2]}</div></div></div>`)}</div></div>
     <div className="panel"><h3>Sequence (${cl} cluster)</h3><div className="muted">5-touch, cluster-routed. Touch 1 opener:</div>
-      <div className="quote">"Saw ${l.company} is hiring a ${l.title.toLowerCase()} — the ramp on that seat is usually the hidden cost. We place trained, HIPAA-ready VAs for it at ~40–60% less. If it's an hourly role, worth a quick cost comparison?"</div></div>
+      <div className="quote">${acct&&l.priority
+        ?"\"Saw "+l.company+" is hiring "+l.roleCount+" admin roles right now — the ramp across those seats is usually the hidden cost. We place trained, HIPAA-ready VAs for the whole set at ~40–60% less, one conversation. Worth a quick cost comparison?\""
+        :"\"Saw "+l.company+" is hiring a "+(acct?l.roles[0].title:l.title).toLowerCase()+" — the ramp on that seat is usually the hidden cost. We place trained, HIPAA-ready VAs for it at ~40–60% less. If it's hourly, worth a quick cost comparison?\""}</div></div>
     <div className="row"><button className="btn primary" style=${{flex:1}}>Approve → SalesBlink (DRY-RUN)</button><button className="btn">Push to Close</button></div></div></div>`;}
 
 const STATUS={new:["Cold Leads","cold"],contacted:["Active","active"],replied:["Active","active"],meeting:["Active","active"],won:["Closed Won","won"],lost:["Lost","lost"]};
 function CRM({setSel}){
-  const leads=useMemo(crmLeads,[]);
   const [q,setQ]=useState("");
-  const rows=leads.filter(l=>!q||(l.title+" "+l.company).toLowerCase().includes(q.toLowerCase()));
+  const actionable=ACCOUNTS.filter(a=>a.accountScore>=70||a.priority);
+  const rows=actionable.filter(a=>!q||a.company.toLowerCase().includes(q.toLowerCase())||a.roles.some(r=>r.title.toLowerCase().includes(q.toLowerCase())));
+  const openRoles=actionable.reduce((s,a)=>s+a.roleCount,0);
   return html`<div><h2>CRM</h2>
-    <div className="lead">Qualified + priority leads ready to sync to Close. Counts are live from the scrape — no estimates. Stages fill once outreach runs.</div>
-    <div className="chips"><${Chip} n=${REAL.qualified} l="Qualified, ready to sync" cls="g"/><${Chip} n=${REAL.priority} l="Priority accounts (3+ roles)" cls="a"/><${Chip} n="0" l="In outreach · DRY-RUN" cls="b"/><${Chip} n="0" l="Won / booked" cls="r"/></div>
-    <div className="panel" style=${{padding:"14px 16px"}}><div className="row" style=${{justifyContent:"space-between"}}><div><span style=${{fontWeight:800}}>Close CRM</span> <span className="pill cand">${leads.length} ready leads</span></div></div>
+    <div className="lead">Account-centric (Salesforce-style): one account per company, its open roles grouped as opportunities. No duplicates. Counts are live from the scrape.</div>
+    <div className="chips"><${Chip} n=${actionable.length} l="Target accounts (deduped)" cls="g"/><${Chip} n=${REAL.priority} l="Priority · 3+ roles" cls="a"/><${Chip} n=${openRoles} l="Open roles across them" cls="b"/><${Chip} n="0" l="In outreach · DRY-RUN" cls="r"/></div>
+    <div className="panel" style=${{padding:"14px 16px"}}><div className="row" style=${{justifyContent:"space-between"}}><div><span style=${{fontWeight:800}}>Close CRM</span> <span className="pill cand">${actionable.length} accounts</span></div></div>
       <div className="tbl-tools" style=${{marginTop:12,marginBottom:0}}>
-        <input className="search" placeholder="Search leads…" value=${q} onInput=${e=>setQ(e.target.value)}/>
-        <button className="btn primary sm">+ New Lead</button><button className="btn sm">⤒ Import CSV</button></div></div>
-    ${STAGES.map(st=>{const items=rows.filter(l=>l.stage===st[0]); if(!items.length) return null; const stt=STATUS[st[0]]; return html`<div key=${st[0]}>
-      <div className="sec-h"><span className="dot" style=${{background:st[2]}}></span>${st[1]} <span className="muted" style=${{fontWeight:600}}>(${items.length})</span></div>
-      ${items.map(l=>html`<div key=${l.id} className="lead-row" onClick=${()=>setSel(l)}>
-        <div style=${{flex:1,minWidth:0}}><div className="co">${l.company}</div><div className="u">${l.title}</div></div>
-        <span className="muted" style=${{whiteSpace:"nowrap"}}>${contactsFor(l).length} contact${contactsFor(l).length>1?"s":""}</span>
-        <span className=${"status "+stt[1]}>${stt[1]==="won"||stt[1]==="active"?html`<span className="d2"></span>`:""}${stt[0]}</span>
-        <span className="muted">›</span></div>`)}</div>`;})}
-    <div className="muted" style=${{marginTop:8}}>Demo pipeline (DRY-RUN) — real leads sync once SalesBlink replies + Close are connected.</div></div>`;}
+        <input className="search" placeholder="Search accounts…" value=${q} onInput=${e=>setQ(e.target.value)}/>
+        <button className="btn primary sm">+ New Account</button><button className="btn sm">⤒ Import CSV</button></div></div>
+    ${rows.map(a=>{const clusters=[...new Set(a.roles.map(r=>cluster(r.title)))]; return html`<div key=${a.id} className="lead-row" onClick=${()=>setSel(a)}>
+      <div style=${{flex:1,minWidth:0}}><div className="co">${a.company} ${a.priority?html`<span className="tag pri">★ ${a.roleCount} roles</span>`:html`<span className="muted" style=${{fontWeight:600}}>· ${a.roleCount} role${a.roleCount>1?"s":""}</span>`}</div>
+        <div className="u">${clusters.join(" · ")}</div></div>
+      <span className="sc-badge" style=${{color:scoreColor(a.accountScore),background:scoreBg(a.accountScore)}}>${a.accountScore}</span>
+      <span className="muted" style=${{whiteSpace:"nowrap"}}>${a.contacts.length} contact${a.contacts.length>1?"s":""}</span>
+      <span className="status cold">Cold</span><span className="muted">›</span></div>`;})}
+    <div className="muted" style=${{marginTop:8}}>Account score = top role + ${ROLE_BONUS} per extra qualifying role (capped). Stages (Contacted → Won) fill once SalesBlink + Close are live.</div></div>`;}
 
 function Toggle({on}){return html`<span style=${{display:"inline-flex",width:38,height:22,borderRadius:20,background:on?"var(--green)":"var(--line2)",position:"relative",transition:".15s"}}><span style=${{position:"absolute",top:2,left:on?18:2,width:18,height:18,borderRadius:"50%",background:"#fff",transition:".15s",boxShadow:"0 1px 2px rgba(0,0,0,.2)"}}></span></span>;`}
 function Settings(){

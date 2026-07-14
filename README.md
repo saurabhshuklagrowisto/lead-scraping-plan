@@ -1,4 +1,4 @@
-# Job Scraping & Scoring Plan — signal-scored outbound pipeline for the staffing industry
+# Lead Scraping Plan — signal-scored outbound pipeline for the staffing industry
 
 An agentic outbound pipeline + mobile command center for a healthcare-staffing agency: scrape US healthcare-admin job postings, score them against the agency's actual buyer ICP, gate on company size for free before spending a credit, enrich, write cluster-routed sequences, and hand booked replies to the sales team — with a feedback → learning → **eval-gated** loop that actually closes.
 

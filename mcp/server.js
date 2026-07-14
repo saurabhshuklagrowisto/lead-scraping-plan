@@ -41,7 +41,7 @@ const TOOLS = [
   { name: "learning_status", description: "Current active rubric version, learned rules, latest eval agreement, and feedback collected.", inputSchema: { type: "object", properties: {} } },
 ];
 
-const server = new Server({ name: "job-scraping-plan", version: "1.0.0" }, { capabilities: { tools: {} } });
+const server = new Server({ name: "lead-scraping-plan", version: "1.0.0" }, { capabilities: { tools: {} } });
 server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: TOOLS }));
 
 server.setRequestHandler(CallToolRequestSchema, async (req) => {
@@ -79,4 +79,4 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
 });
 
 await server.connect(new StdioServerTransport());
-console.error("job-scraping-plan MCP server running (stdio)");
+console.error("lead-scraping-plan MCP server running (stdio)");

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
-<title>QuickTeam Outbound — Command Center</title>
+<title>Staffing Signal Engine — Command Center</title>
 <style>
   :root{
     --bg:#f4f7fc; --panel:#ffffff; --panel2:#f7f9fd; --tint:#eef4ff;
@@ -206,7 +206,7 @@ function Pipeline({leads,setSel,go}){
   const glance=[["Scraped",REAL.scraped,"real · from the scrape","📥"],["Qualified",REAL.qualified,"score ≥70 · real","✨"],
     ["Nurture",REAL.nurture,"40–69 · real","◐"],["Enriched",0,"pending Clay key","👥"],["Sequenced",0,"pending keys","✉"],["Replied",0,"pending keys","✓"]];
   const acts=[["📥","Scraped & scored "+REAL.scraped+" postings","Indeed · 14-day window · $0 · real"],
-    ["🧠","Scored on QuickTeam rubric v1.0",REAL.qualified+" qualified · "+REAL.nurture+" nurture · "+REAL.disqualified+" disqualified"],
+    ["🧠","Scored on the staffing rubric v1.0",REAL.qualified+" qualified · "+REAL.nurture+" nurture · "+REAL.disqualified+" disqualified"],
     ["✅","Eval vs old AI on 61 human labels","77% vs 67% agreement · candidate promoted"],
     ["🚪","NPPES size gate + Clay enrichment","not run yet — pending API keys (DRY-RUN)"],
     ["✉️","SalesBlink / Cleanlist outreach","not run yet — pending keys (DRY-RUN)"]];
@@ -219,8 +219,8 @@ function Pipeline({leads,setSel,go}){
   return html`<div>
     <div className="hero">
       <div className="row"><span className="eyebrow"><span className="d2" style=${{width:7,height:7,borderRadius:"50%",background:"var(--green)",display:"inline-block"}}></span> Agentic pipeline · Dry run</span><span className="idle">● Pipeline idle</span></div>
-      <div className="big">QuickTeam Outbound</div>
-      <div className="tl2">Signal-scored healthcare-admin postings, re-oriented for QuickTeam's buyer ICP.</div>
+      <div className="big">Staffing Signal Engine</div>
+      <div className="tl2">Signal-scored healthcare-admin postings, re-oriented for the staffing seller's buyer ICP.</div>
       <div className="row"><button className="btn primary" onClick=${()=>go("jobs")}>⚡ Run scrape now →</button><button className="btn" onClick=${()=>go("jobs")}>Browse jobs</button></div>
       <div className="metastrip">
         <div className="ms">🌐 Indeed + LinkedIn · US employers</div>
@@ -257,7 +257,7 @@ function Jobs({leads,setSel}){
     const head=["title","company","location","cluster","size","score","verdict"];
     const lines=[head.join(",")].concat(rows.map(l=>[l.title,l.company,l.location,cluster(l.title),l.size,l.score,vLabel(l.verdict)].map(x=>`"${(""+(x||"")).replace(/"/g,'""')}"`).join(",")));
     const blob=new Blob([lines.join("\n")],{type:"text/csv"}); const a=document.createElement("a");
-    a.href=URL.createObjectURL(blob); a.download="quickteam-leads.csv"; a.click();
+    a.href=URL.createObjectURL(blob); a.download="staffing-leads.csv"; a.click();
   };
   return html`<div>
     <h2>Jobs <span className="muted" style=${{fontWeight:600}}>· ${rows.length} of ${leads.length}</span></h2>
@@ -310,7 +310,7 @@ function Review({fb,setFb}){
       <div className="muted" style=${{marginTop:8}}>Stored and fed to the next learning run as few-shot calibration — no silent retrain.</div></div></div>`;}
 
 function Learning(){
-  const trend=[["TalentBridge",67.2,"var(--red)"],["QuickTeam v1.0",77,"var(--amber)"],["+ learning →",90,"var(--green)"]];
+  const trend=[["TalentBridge",67.2,"var(--red)"],["the staffing seller v1.0",77,"var(--amber)"],["+ learning →",90,"var(--green)"]];
   return html`<div><h2>Learning & Eval</h2>
     <div className="lead">The loop the old app faked: feedback → distilled rules → a candidate that must beat the baseline on the 61 human holdout before it ships.</div>
     <div className="panel"><h3>Agreement with human gold (eval gate)</h3>
@@ -369,16 +369,16 @@ function Benchmark(){
   return html`<div><h2>Why ours is better</h2>
     <div className="lead">Measured on ${b.sample} real human-rated postings from the old dashboard. Same data — the difference is the objective.</div>
     <div className="bench"><div className="b old"><div className="muted">Old TalentBridge AI</div><div className="big" style=${{color:"var(--red)"}}>${b.old_agreement}%</div><div className="muted">agreement w/ human gold</div><div style=${{marginTop:10,fontWeight:800,color:"var(--red)"}}>${b.old_lost} leads thrown away</div></div>
-      <div className="b new"><div className="muted">QuickTeam scorer v1</div><div className="big" style=${{color:"var(--green)"}}>${b.new_agreement}%</div><div className="muted">agreement w/ human gold</div><div style=${{marginTop:10,fontWeight:800,color:"var(--green)"}}>${b.new_lost} leads thrown away</div></div></div>
+      <div className="b new"><div className="muted">staffing scorer v1</div><div className="big" style=${{color:"var(--green)"}}>${b.new_agreement}%</div><div className="muted">agreement w/ human gold</div><div style=${{marginTop:10,fontWeight:800,color:"var(--green)"}}>${b.new_lost} leads thrown away</div></div></div>
     <div className="panel" style=${{marginTop:14,borderColor:"var(--green)",background:"var(--green-lt)"}}>
-      <div style=${{fontWeight:800,fontSize:15,color:"var(--ink)"}}>What this means for QuickTeam</div>
+      <div style=${{fontWeight:800,fontSize:15,color:"var(--ink)"}}>What this means for the business</div>
       <div style=${{fontSize:13,color:"var(--mid)",marginTop:6}}>Their AI discarded <b style=${{color:"var(--red)"}}>1 in 3</b> good leads. On the same ~${D.stats.total} scraped postings, re-orienting the objective surfaces roughly <b style=${{color:"var(--green)"}}>+${extraQualified} more qualified leads</b> the old system would have thrown away — more first meetings, more placements, from traffic you already scrape at $0. And it keeps improving: every piece of feedback pushes accuracy toward the 90% gate.</div></div>
     <div className="panel"><h3>The one insight: wrong objective</h3>
-      <div className="muted" style=${{marginBottom:10}}>The old AI scores as if it's a job-seeker looking for a remote role. QuickTeam SELLS staffing — the opposite lens.</div>
-      <div className="tbl-scroll"><table><thead><tr><th>Signal</th><th>Old (job-seeker)</th><th>QuickTeam (seller)</th></tr></thead>
+      <div className="muted" style=${{marginBottom:10}}>The old AI scores as if it's a job-seeker looking for a remote role. A staffing agency SELLS staffing — the opposite lens.</div>
+      <div className="tbl-scroll"><table><thead><tr><th>Signal</th><th>Old (job-seeker)</th><th>the staffing seller (seller)</th></tr></thead>
       <tbody>${obj.map((r,i)=>html`<tr key=${i}><td style=${{color:"var(--ink)",fontWeight:600}}>${r[0]}</td><td style=${{color:"var(--red)"}}>${r[1]}</td><td style=${{color:"var(--green)"}}>${r[2]}</td></tr>`)}</tbody></table></div></div>
     <div className="panel"><h3>The ${lost.length} leads their AI discarded that you want</h3>
-      <div className="muted" style=${{marginBottom:8}}>Almost all rejected for "US work authorization required." For QuickTeam these US practices ARE the customers.</div>
+      <div className="muted" style=${{marginBottom:8}}>Almost all rejected for "US work authorization required." For a staffing seller, these US practices ARE the customers.</div>
       ${lost.slice(0,8).map(f=>html`<div key=${f.id} style=${{padding:"8px 0",borderBottom:"1px solid var(--line)"}}><div style=${{fontWeight:600}}>${f.title} <span className="muted">· ${f.company}</span></div><div className="quote">★${f.rating} "${f.note}"</div></div>`)}</div>
     <div className="panel"><h3>Feature parity + more</h3>
       <div className="tbl-scroll"><table><thead><tr><th>Feature</th><th>Old app</th><th>Ours</th></tr></thead>
@@ -520,7 +520,7 @@ function App(){
   const [tab,setTab]=useState("pipeline"); const [sel,setSel]=useState(null); const [fb,setFb]=useState(loadFb());
   const leads=D.leads;
   return html`<div>
-    <div className="top"><div className="top-in"><div className="logo">Q</div><div className="brand"><h1>QuickTeam Outbound</h1><div className="sub">Signal-scored VA staffing pipeline</div></div><span className="dry">DRY-RUN</span></div>
+    <div className="top"><div className="top-in"><div className="logo">S</div><div className="brand"><h1>Staffing Signal Engine</h1><div className="sub">Signal-scored VA staffing pipeline</div></div><span className="dry">DRY-RUN</span></div>
       <div className="top-in dnav">${TABS.map(t=>html`<button key=${t[0]} className=${tab===t[0]?"on":""} onClick=${()=>setTab(t[0])}>${t[1]}</button>`)}</div></div>
     <div className="wrap">
       ${tab==="pipeline"&&html`<${Pipeline} leads=${leads} setSel=${setSel} go=${setTab}/>`}

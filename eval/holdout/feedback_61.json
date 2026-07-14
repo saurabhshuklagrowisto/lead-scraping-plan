@@ -1,8 +1,8 @@
 {
   "_meta": {
-    "source": "QuickTeam TalentBridge dashboard RLHF export, 61 human-rated postings, last trained 2026-07-07",
+    "source": "the prior dashboard RLHF export, 61 human-rated postings, last trained 2026-07-07",
     "rating_scale": "1=very bad, 2=bad, 3=okay, 4=good, 5=excellent (later entries use worded 'bad'/'good'/'okay')",
-    "gold_verdict_rule": "rating>=4 -> qualified; rating==3 -> nurture; rating<=2 -> disqualified. This is QuickTeam (staffing-seller) truth, NOT the old AI's job-seeker verdict.",
+    "gold_verdict_rule": "rating>=4 -> qualified; rating==3 -> nurture; rating<=2 -> disqualified. This is the staffing seller's truth, NOT the old AI's job-seeker verdict.",
     "correction": "true when the human gold_verdict disagrees with the old AI ai_verdict — these are the entries that re-orient the rubric",
     "count": 61
   },

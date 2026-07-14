@@ -1,5 +1,5 @@
 {
-  "name": "quickteam-outbound",
+  "name": "job-scraping-plan",
   "version": "1.0.0",
   "description": "Signal-scored VA staffing outbound pipeline + mobile command center + Claude MCP server",
   "type": "module",

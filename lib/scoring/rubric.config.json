@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "objective": "QuickTeam staffing-seller: a US practice hiring a JUNIOR, remote-capable admin role we can fill with an offshore VA is the CUSTOMER. Re-oriented from the old job-seeker rubric using 61 real human corrections (20/61 = 33% of leads the old AI wrongly discarded, almost all because it treated 'US work authorization required' as a disqualifier).",
+  "objective": "the staffing seller staffing-seller: a US practice hiring a JUNIOR, remote-capable admin role we can fill with an offshore VA is the CUSTOMER. Re-oriented from the old job-seeker rubric using 61 real human corrections (20/61 = 33% of leads the old AI wrongly discarded, almost all because it treated 'US work authorization required' as a disqualifier).",
   "start_score": 50,
   "gate": { "qualified": 70, "nurture": 40 },
   "ambiguous_remote_cap": 69,

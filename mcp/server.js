@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * QuickTeam Outbound — Claude MCP server.
+ * Staffing Signal Engine — Claude MCP server.
  * Lets a founder run the pipeline by talking to Claude:
  *   list_leads, get_lead, pipeline_status, submit_feedback, teach_rule, run_eval, learning_status
  * Reads the repo's seed data; run_eval shells out to the Python eval harness.
@@ -32,7 +32,7 @@ const writeState = s => fs.writeFileSync(STATE, JSON.stringify(s, null, 2));
 const text = o => ({ content: [{ type: "text", text: typeof o === "string" ? o : JSON.stringify(o, null, 2) }] });
 
 const TOOLS = [
-  { name: "pipeline_status", description: "Funnel counts + integration health for the QuickTeam outbound pipeline.", inputSchema: { type: "object", properties: {} } },
+  { name: "pipeline_status", description: "Funnel counts + integration health for the staffing outbound pipeline.", inputSchema: { type: "object", properties: {} } },
   { name: "list_leads", description: "List scored leads. Filter by verdict (qualified|deprioritized|disqualified) and limit.", inputSchema: { type: "object", properties: { verdict: { type: "string" }, limit: { type: "number" } } } },
   { name: "get_lead", description: "Get one lead by id.", inputSchema: { type: "object", properties: { id: { type: "string" } }, required: ["id"] } },
   { name: "submit_feedback", description: "Label a posting to teach the scorer. verdict: agree|too_high|too_low|wrong_disqualify.", inputSchema: { type: "object", properties: { id: { type: "string" }, verdict: { type: "string" }, reason_tags: { type: "array", items: { type: "string" } }, note: { type: "string" } }, required: ["id", "verdict"] } },
@@ -41,7 +41,7 @@ const TOOLS = [
   { name: "learning_status", description: "Current active rubric version, learned rules, latest eval agreement, and feedback collected.", inputSchema: { type: "object", properties: {} } },
 ];
 
-const server = new Server({ name: "quickteam-outbound", version: "1.0.0" }, { capabilities: { tools: {} } });
+const server = new Server({ name: "job-scraping-plan", version: "1.0.0" }, { capabilities: { tools: {} } });
 server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: TOOLS }));
 
 server.setRequestHandler(CallToolRequestSchema, async (req) => {
@@ -79,4 +79,4 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
 });
 
 await server.connect(new StdioServerTransport());
-console.error("quickteam-outbound MCP server running (stdio)");
+console.error("job-scraping-plan MCP server running (stdio)");

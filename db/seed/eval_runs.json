@@ -1,5 +1,5 @@
 {
-  "_meta": "Seed eval run: old TalentBridge AI (baseline) vs QuickTeam re-oriented scorer v1.0.0 (candidate), on the 61-entry human holdout. Decision uses the plan's gate: promote iff agreement >= baseline AND >= 90 AND false-disqualify not worse.",
+  "_meta": "Seed eval run: old TalentBridge AI (baseline) vs staffing re-oriented scorer v1.0.0 (candidate), on the 61-entry human holdout. Decision uses the plan's gate: promote iff agreement >= baseline AND >= 90 AND false-disqualify not worse.",
   "runs": [
     {
       "id": 1,
@@ -12,8 +12,8 @@
     },
     {
       "id": 2,
-      "system": "NEW QuickTeam scorer",
-      "version": "quickteam-1.0.0",
+      "system": "NEW staffing scorer",
+      "version": "staffing-1.0.0",
       "agreement_pct": 77.0,
       "false_disqualify": 4,
       "n": 61,

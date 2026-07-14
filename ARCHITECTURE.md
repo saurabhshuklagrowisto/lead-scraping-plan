@@ -30,5 +30,5 @@ feedback ─► few-shot (pgvector kNN over feedback) ─► distilled learned_r
 
 ## MCP quick add (Claude Desktop / Code)
 ```json
-{ "mcpServers": { "quickteam-outbound": { "command": "node", "args": ["<repo>/mcp/server.js"] } } }
+{ "mcpServers": { "job-scraping-plan": { "command": "node", "args": ["<repo>/mcp/server.js"] } } }
 ```

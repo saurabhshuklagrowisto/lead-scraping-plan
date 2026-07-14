@@ -3,7 +3,7 @@
   "rules": [
     {
       "id": 1,
-      "rule_text": "A US work-authorization / W-2 / 'no 1099' / US-citizen requirement is NOT a disqualifier for QuickTeam — these are normal US employers and are the target customers. Treat as an outreach flag (convince them to hire abroad), not a penalty.",
+      "rule_text": "A US work-authorization / W-2 / 'no 1099' / US-citizen requirement is NOT a disqualifier for a staffing seller — these are normal US employers and are the target customers. Treat as an outreach flag (convince them to hire abroad), not a penalty.",
       "rule_type": "green_flag",
       "pattern": "must be authorized to work in the (US|United States)|W-?2 only|no (contractors|1099)|US citizen|US-based",
       "weight": 0,

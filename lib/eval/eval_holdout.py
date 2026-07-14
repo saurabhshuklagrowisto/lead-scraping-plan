@@ -51,7 +51,7 @@ def run(baseline: bool = False) -> dict:
             false_disq += 1
     n = len(entries)
     return {
-        "system": "OLD TalentBridge AI (real verdicts)" if baseline else "NEW QuickTeam scorer",
+        "system": "OLD TalentBridge AI (real verdicts)" if baseline else "NEW staffing scorer",
         "n": n,
         "agreement_pct": round(100 * agree / n, 1),
         "false_disqualify": false_disq,

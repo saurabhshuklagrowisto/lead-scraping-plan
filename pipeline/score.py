@@ -5,7 +5,7 @@ scorer) and scores a posting deterministically. In production a Claude (Haiku) p
 refines the ambiguous 40-69 band using feedback few-shots; the rubric, gate, and
 output schema are identical, so demo output == real output shape.
 
-Re-oriented for QuickTeam (staffing seller) using 61 real human corrections.
+Re-oriented for the staffing seller using 61 real human corrections.
 """
 import json
 import re

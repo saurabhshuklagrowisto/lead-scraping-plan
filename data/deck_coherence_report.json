@@ -1,0 +1,11 @@
+{
+ "items": [
+  {
+   "check": "inputs",
+   "level": "error",
+   "detail": "data/ux_findings.json missing or invalid"
+  }
+ ],
+ "errors": 1,
+ "warnings": 0
+}

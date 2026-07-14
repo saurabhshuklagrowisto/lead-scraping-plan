@@ -1,0 +1,9 @@
+{
+ "checked": false,
+ "errors": [
+  {
+   "error": "data/ux_findings.json missing or invalid"
+  }
+ ],
+ "warnings": []
+}

@@ -299,20 +299,76 @@ function Benchmark(){
         ["First-class feedback + learning","old: 3 overwrite columns; unbounded rule blob; cron never scheduled"],["Free NPPES size gate before spend","old: none — a 2,000-person RCM firm slipped through"],
         ["Mobile-first + MCP","old: desktop-only; leaked a real email on a public endpoint"]].map((r,i)=>html`<div key=${i} className="kv"><span className="k">${r[1]}</span><span style=${{color:"var(--green)",fontWeight:700,minWidth:118,textAlign:"right"}}>${r[0]}</span></div>`)}</div></div>`;}
 
+// --- CRM synthesis (deterministic demo data from qualified + priority leads) ---
+const STAGES=[["new","New Lead","var(--faint)"],["contacted","Contacted","var(--blue)"],["replied","Replied","var(--violet)"],["meeting","Meeting Booked","var(--amber)"],["won","Won","var(--green)"],["lost","Lost","var(--red)"]];
+const hashInt=s=>{let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))>>>0;return h;};
+const firstNames=["Sarah","Mike","Dr. Patel","Linda","James","Ana","Robert","Emily","David","Grace"];
+const contactsFor=l=>{const h=hashInt(l.id);const solo=l.size==="solo-small";
+  const c=[{name:firstNames[h%firstNames.length]+" "+["Ross","Kim","Nguyen","Adams","Lopez"][h%5],title:solo?"Owner / Practice Owner":"Practice Administrator",email:"owner@"+(l.company||"co").toLowerCase().replace(/[^a-z]/g,"").slice(0,12)+".com",phone:"+1 (5"+(h%90+10)+") 55"+(h%9)+"-0"+(h%89+10),linkedin:"linkedin.com/in/"+(l.company||"x").toLowerCase().replace(/[^a-z]/g,"").slice(0,10),conf:0.9,verified:true}];
+  if(!solo)c.push({name:firstNames[(h+3)%firstNames.length]+" "+["Office Mgr"][0],title:"Office Manager",email:"office@"+(l.company||"co").toLowerCase().replace(/[^a-z]/g,"").slice(0,12)+".com",phone:"+1 (5"+(h%80+15)+") 55"+(h%8)+"-0"+(h%70+20),linkedin:"linkedin.com/in/officemgr",conf:0.72,verified:false});
+  return c;};
+const crmLeads=()=>{const dist=[0,0,0,1,1,1,1,2,2,3,4,0,1,2,0,1,3,5];
+  return D.leads.filter(l=>l.verdict==="qualified"||PRI.has(l.company)).slice(0,18).map((l,i)=>({...l,stage:STAGES[dist[i%18]][0]}));};
+const activityFor=(l,stage)=>{const base=[["📥","Lead created from Indeed posting","2d ago"],["🚪","NPPES size check passed · solo-small","2d ago"],["✍️","5-touch sequence drafted (billing_rcm)","1d ago"]];
+  const map={contacted:[["✉️","Touch 1 sent via SalesBlink","1d ago"]],replied:[["✉️","Touch 1 sent","1d ago"],["💬","Replied: 'tell me more'","4h ago"]],meeting:[["✉️","Touch 2 sent","1d ago"],["📞","Discovery call booked — Thu 2pm","2h ago"]],won:[["📞","Discovery call done","1d ago"],["🎉","Closed — 2 VA seats","3h ago"]],lost:[["✉️","3 touches sent","2d ago"],["🚫","No fit — using in-house","5h ago"]]};
+  return base.concat(map[stage]||[]);};
+
 function Sheet({l,onClose}){
-  if(!l) return null; const cl=cluster(l.title);
+  if(!l) return null; const cl=cluster(l.title); const contacts=contactsFor(l); const stage=l.stage||"new";
+  const acts=activityFor(l,stage);
   return html`<div className="modal" onClick=${onClose}><div className="sheet" onClick=${e=>e.stopPropagation()}>
     <button className="x" onClick=${onClose}>×</button><div className="muted">${l.company} · ${l.location||"US"}</div>
     <h2 style=${{marginTop:2}}>${l.title}</h2>
-    <div className="tags" style=${{margin:"8px 0 12px"}}><span className="tag cl">${cl}</span><span className="tag">${l.size}</span><span className="sc-badge" style=${{color:scoreColor(l.score),background:scoreBg(l.score)}}>score ${l.score} · ${vLabel(l.verdict)}</span></div>
+    <div className="tags" style=${{margin:"8px 0 12px"}}><span className="tag cl">${cl}</span><span className="tag">${l.size}</span><span className="sc-badge" style=${{color:scoreColor(l.score),background:scoreBg(l.score)}}>score ${l.score} · ${vLabel(l.verdict)}</span>${l.stage&&html`<span className="pill cand">${STAGES.find(s=>s[0]===l.stage)[1]}</span>`}</div>
     <div className="panel"><h3>Why this score</h3><${Reasons} text=${l.reasons}/></div>
     <div className="panel"><h3>NPPES size gate</h3><div className="kv"><span className="k">Provider count (stub)</span><span>4 · solo-small</span></div><div className="kv"><span className="k">Excluded?</span><span style=${{color:"var(--green)"}}>No — in ICP</span></div></div>
-    <div className="panel"><h3>Decision-maker contacts</h3><div className="kv"><span className="k">Owner / Practice Manager</span><span>conf 0.9 · <span className="muted">stub</span></span></div><div className="kv"><span className="k">Office Manager</span><span>conf 0.7 · <span className="muted">stub</span></span></div></div>
+    <div className="panel"><h3>Contacts</h3>${contacts.map((c,i)=>html`<div key=${i} style=${{padding:"8px 0",borderBottom:i<contacts.length-1?"1px solid var(--line)":"none"}}>
+      <div className="row" style=${{justifyContent:"space-between"}}><span style=${{fontWeight:600,color:"var(--ink)"}}>${c.name}</span><span className=${"pill "+(c.verified?"g":"a")}>${c.verified?"verified":"unverified"} · ${c.conf}</span></div>
+      <div className="muted">${c.title}</div><div className="muted">✉ ${c.email} · ☎ ${c.phone}</div><div className="muted">in ${c.linkedin}</div></div>`)}
+      <div className="muted" style=${{marginTop:6}}>Enriched via Clay waterfall (stub) · LinkedIn pulled per contact</div></div>
+    <div className="panel"><h3>Activity</h3><div className="feed">${acts.map((a,i)=>html`<div className="fi" key=${i}><span className="ic">${a[0]}</span><div><div className="t">${a[1]}</div><div className="m">${a[2]}</div></div></div>`)}</div></div>
     <div className="panel"><h3>Sequence (${cl} cluster)</h3><div className="muted">5-touch, cluster-routed. Touch 1 opener:</div>
       <div className="quote">"Saw ${l.company} is hiring a ${l.title.toLowerCase()} — the ramp on that seat is usually the hidden cost. We place trained, HIPAA-ready VAs for it at ~40–60% less. If it's an hourly role, worth a quick cost comparison?"</div></div>
-    <button className="btn primary" style=${{width:"100%"}}>Approve → SalesBlink (DRY-RUN)</button></div></div>`;}
+    <div className="row"><button className="btn primary" style=${{flex:1}}>Approve → SalesBlink (DRY-RUN)</button><button className="btn">Push to Close</button></div></div></div>`;}
 
-const TABS=[["pipeline","Pipeline","▦"],["jobs","Jobs","☰"],["review","Review","✎"],["learning","Learning","◈"],["outreach","Outreach","✉"],["tools","Tools","⚙"],["benchmark","Why better","★"]];
+function CRM({setSel}){
+  const leads=useMemo(crmLeads,[]);
+  const byStage=s=>leads.filter(l=>l.stage===s);
+  const open=leads.filter(l=>!["won","lost"].includes(l.stage)).length;
+  const won=byStage("won").length;
+  return html`<div><h2>CRM</h2>
+    <div className="lead">Booked replies sync to Close CRM with full context. Pipeline stages, contacts, activity, and tasks per lead.</div>
+    <div className="chips"><${Chip} n=${open} l="Open in pipeline" cls="b"/><${Chip} n=${byStage("meeting").length} l="Meetings booked" cls="a"/><${Chip} n=${won} l="Won (VA seats)" cls="g"/><${Chip} n=${"$"+(won*7200).toLocaleString()} l="Est. booked value" cls="g"/></div>
+    ${STAGES.map(st=>{const items=byStage(st[0]); if(!items.length) return null; return html`<div key=${st[0]}>
+      <div className="sec-h"><span className="dot" style=${{background:st[2]}}></span>${st[1]} <span className="muted" style=${{fontWeight:600}}>(${items.length})</span></div>
+      <div className="grid">${items.map(l=>html`<div key=${l.id} className="card" onClick=${()=>setSel(l)}>
+        <div className="r1"><div><div className="co">${l.company}</div><div className="ti">${l.title}</div></div><div className="score" style=${{color:scoreColor(l.score)}}>${l.score}</div></div>
+        <div className="tags"><span className="tag cl">${cluster(l.title)}</span><span className="tag">${l.size}</span>${PRI.has(l.company)&&html`<span className="tag pri">★</span>`}</div></div>`)}</div></div>`;})}
+    <div className="muted" style=${{marginTop:8}}>Demo pipeline (DRY-RUN) — real stages populate once SalesBlink replies and Close sync are live.</div></div>`;}
+
+function Toggle({on}){return html`<span style=${{display:"inline-flex",width:38,height:22,borderRadius:20,background:on?"var(--green)":"var(--line2)",position:"relative",transition:".15s"}}><span style=${{position:"absolute",top:2,left:on?18:2,width:18,height:18,borderRadius:"50%",background:"#fff",transition:".15s",boxShadow:"0 1px 2px rgba(0,0,0,.2)"}}></span></span>;`}
+function Settings(){
+  const [flash,setFlash]=useState("");
+  const run=n=>{setFlash(n+" queued (DRY-RUN — no external calls)");setTimeout(()=>setFlash(""),2500);};
+  return html`<div><h2>Settings</h2><div className="lead">Safety toggles, targeting, and manual pipeline triggers.</div>
+    <div className="panel"><h3>Safety</h3>
+      <div className="kv"><span className="k">DRY-RUN (nothing sends or spends)</span><${Toggle} on=${true}/></div>
+      <div className="kv"><span className="k">Agent enabled (daily cron)</span><${Toggle} on=${true}/></div>
+      <div className="kv"><span className="k">Require human approval before send</span><${Toggle} on=${true}/></div></div>
+    <div className="panel"><h3>Targeting</h3>
+      <div className="kv"><span className="k">Geography</span><span>United States (HQ)</span></div>
+      <div className="kv"><span className="k">Sources</span><span>Indeed · LinkedIn (paused)</span></div>
+      <div className="kv"><span className="k">Target titles</span><span>25 healthcare-admin roles</span></div>
+      <div className="kv"><span className="k">Score gate</span><span>≥70 qualified · 40–69 nurture</span></div>
+      <div className="kv"><span className="k">Freshness window</span><span>14 days</span></div></div>
+    <div className="panel"><h3>Manual runs</h3>
+      <div className="row">${["Scrape now","Re-score all","Run eval","Distill rules"].map(b=>html`<button key=${b} className="btn sm" onClick=${()=>run(b)}>${b}</button>`)}</div>
+      ${flash&&html`<div className="muted" style=${{marginTop:10,color:"var(--green)"}}>✓ ${flash}</div>`}</div>
+    <div className="panel"><h3>Data</h3>
+      <div className="row"><button className="btn sm" onClick=${()=>{localStorage.removeItem(LS);location.reload();}}>Reset my feedback (local)</button></div>
+      <div className="muted" style=${{marginTop:8}}>Feedback is stored in your browser in this demo. The live build persists to Supabase.</div></div></div>`;}
+
+const TABS=[["pipeline","Pipeline","▦"],["jobs","Jobs","☰"],["crm","CRM","▤"],["review","Review","✎"],["outreach","Outreach","✉"],["learning","Learning","◈"],["tools","Tools","⚙"],["settings","Settings","⚙"],["benchmark","Why better","★"]];
 function App(){
   const [tab,setTab]=useState("pipeline"); const [sel,setSel]=useState(null); const [fb,setFb]=useState(loadFb());
   const leads=D.leads;
@@ -322,10 +378,12 @@ function App(){
     <div className="wrap">
       ${tab==="pipeline"&&html`<${Pipeline} leads=${leads} setSel=${setSel} go=${setTab}/>`}
       ${tab==="jobs"&&html`<${Jobs} leads=${leads} setSel=${setSel}/>`}
+      ${tab==="crm"&&html`<${CRM} setSel=${setSel}/>`}
       ${tab==="review"&&html`<${Review} fb=${fb} setFb=${setFb}/>`}
-      ${tab==="learning"&&html`<${Learning}/>`}
       ${tab==="outreach"&&html`<${Outreach} leads=${leads}/>`}
+      ${tab==="learning"&&html`<${Learning}/>`}
       ${tab==="tools"&&html`<${Tools}/>`}
+      ${tab==="settings"&&html`<${Settings}/>`}
       ${tab==="benchmark"&&html`<${Benchmark}/>`}</div>
     <${Sheet} l=${sel} onClose=${()=>setSel(null)}/>
     <div className="tabbar">${TABS.map(t=>html`<button key=${t[0]} className=${tab===t[0]?"on":""} onClick=${()=>setTab(t[0])}><span className="ic">${t[2]}</span>${t[1]}</button>`)}</div></div>`;}

@@ -287,14 +287,34 @@ function Tools(){
 
 function Benchmark(){
   const b=D.benchmark, lost=D.feedback.filter(f=>f.ai_verdict==="not_relevant"&&f.gold_verdict!=="disqualified");
+  const extraQualified=Math.round(D.stats.total*(b.new_agreement-b.old_agreement)/100);
+  const obj=[["\"US work auth required\" / US-based","disqualify ✗","the customer ✓ (convince to hire abroad)"],
+    ["Full-time salaried (not hourly)","ignored","a lead → hourly cost-comparison angle"],
+    ["Senior / Executive / Analyst","sometimes passed","disqualify (not VA-fillable)"],
+    ["US coding cert (CPC/EPIC)","disqualify","deprioritize (hard to fill)"],
+    ["Clinical / hands-on","disqualify","disqualify (agree)"]];
+  const parity=[["Scrape + score jobs","✓","✓"],["Per-job feedback","basic (unused)","✓ + reason tags + history"],
+    ["Learning from feedback","prompt-stuffing, no gate","✓ eval-gated"],["Company size gate","✗","✓ free NPPES"],
+    ["CRM pipeline","✓ (Close tab)","✓"],["Outreach queue","✓","✓"],["Jobs table + export","✓","✓"],
+    ["Settings / manual runs","✓","✓"],["Benchmark / accuracy view","✗","✓"],["Mobile-first","✗","✓"],["Run from Claude (MCP)","✗","✓"]];
   return html`<div><h2>Why ours is better</h2>
-    <div className="lead">Measured on ${b.sample} real human-rated postings from the old dashboard. Same data, re-oriented objective.</div>
+    <div className="lead">Measured on ${b.sample} real human-rated postings from the old dashboard. Same data — the difference is the objective.</div>
     <div className="bench"><div className="b old"><div className="muted">Old TalentBridge AI</div><div className="big" style=${{color:"var(--red)"}}>${b.old_agreement}%</div><div className="muted">agreement w/ human gold</div><div style=${{marginTop:10,fontWeight:800,color:"var(--red)"}}>${b.old_lost} leads thrown away</div></div>
       <div className="b new"><div className="muted">QuickTeam scorer v1</div><div className="big" style=${{color:"var(--green)"}}>${b.new_agreement}%</div><div className="muted">agreement w/ human gold</div><div style=${{marginTop:10,fontWeight:800,color:"var(--green)"}}>${b.new_lost} leads thrown away</div></div></div>
-    <div className="panel" style=${{marginTop:14}}><h3>The ${lost.length} leads their AI discarded that you want</h3>
-      <div className="muted" style=${{marginBottom:8}}>Almost all rejected for "US work authorization required" — job-seeker logic. For QuickTeam these US practices ARE the customers.</div>
-      ${lost.slice(0,10).map(f=>html`<div key=${f.id} style=${{padding:"8px 0",borderBottom:"1px solid var(--line)"}}><div style=${{fontWeight:600}}>${f.title} <span className="muted">· ${f.company}</span></div><div className="quote">★${f.rating} "${f.note}"</div></div>`)}</div>
-    <div className="panel"><h3>Architecture wins</h3>
+    <div className="panel" style=${{marginTop:14,borderColor:"var(--green)",background:"var(--green-lt)"}}>
+      <div style=${{fontWeight:800,fontSize:15,color:"var(--ink)"}}>What this means for QuickTeam</div>
+      <div style=${{fontSize:13,color:"var(--mid)",marginTop:6}}>Their AI discarded <b style=${{color:"var(--red)"}}>1 in 3</b> good leads. On the same ~${D.stats.total} scraped postings, re-orienting the objective surfaces roughly <b style=${{color:"var(--green)"}}>+${extraQualified} more qualified leads</b> the old system would have thrown away — more first meetings, more placements, from traffic you already scrape at $0. And it keeps improving: every piece of feedback pushes accuracy toward the 90% gate.</div></div>
+    <div className="panel"><h3>The one insight: wrong objective</h3>
+      <div className="muted" style=${{marginBottom:10}}>The old AI scores as if it's a job-seeker looking for a remote role. QuickTeam SELLS staffing — the opposite lens.</div>
+      <div className="tbl-scroll"><table><thead><tr><th>Signal</th><th>Old (job-seeker)</th><th>QuickTeam (seller)</th></tr></thead>
+      <tbody>${obj.map((r,i)=>html`<tr key=${i}><td style=${{color:"var(--ink)",fontWeight:600}}>${r[0]}</td><td style=${{color:"var(--red)"}}>${r[1]}</td><td style=${{color:"var(--green)"}}>${r[2]}</td></tr>`)}</tbody></table></div></div>
+    <div className="panel"><h3>The ${lost.length} leads their AI discarded that you want</h3>
+      <div className="muted" style=${{marginBottom:8}}>Almost all rejected for "US work authorization required." For QuickTeam these US practices ARE the customers.</div>
+      ${lost.slice(0,8).map(f=>html`<div key=${f.id} style=${{padding:"8px 0",borderBottom:"1px solid var(--line)"}}><div style=${{fontWeight:600}}>${f.title} <span className="muted">· ${f.company}</span></div><div className="quote">★${f.rating} "${f.note}"</div></div>`)}</div>
+    <div className="panel"><h3>Feature parity + more</h3>
+      <div className="tbl-scroll"><table><thead><tr><th>Feature</th><th>Old app</th><th>Ours</th></tr></thead>
+      <tbody>${parity.map((r,i)=>html`<tr key=${i}><td style=${{color:"var(--ink)",fontWeight:600}}>${r[0]}</td><td className="muted">${r[1]}</td><td style=${{color:"var(--green)",fontWeight:600}}>${r[2]}</td></tr>`)}</tbody></table></div></div>
+    <div className="panel"><h3>Under the hood</h3>
       ${[["One unified scorer","old: cron ran a keyword filter; the AI only ran on a manual button"],["Eval gate blocks regressions","old: no eval harness — learned rules shipped blind"],
         ["First-class feedback + learning","old: 3 overwrite columns; unbounded rule blob; cron never scheduled"],["Free NPPES size gate before spend","old: none — a 2,000-person RCM firm slipped through"],
         ["Mobile-first + MCP","old: desktop-only; leaked a real email on a public endpoint"]].map((r,i)=>html`<div key=${i} className="kv"><span className="k">${r[1]}</span><span style=${{color:"var(--green)",fontWeight:700,minWidth:118,textAlign:"right"}}>${r[0]}</span></div>`)}</div></div>`;}
@@ -313,14 +333,28 @@ const activityFor=(l,stage)=>{const base=[["📥","Lead created from Indeed post
   const map={contacted:[["✉️","Touch 1 sent via SalesBlink","1d ago"]],replied:[["✉️","Touch 1 sent","1d ago"],["💬","Replied: 'tell me more'","4h ago"]],meeting:[["✉️","Touch 2 sent","1d ago"],["📞","Discovery call booked — Thu 2pm","2h ago"]],won:[["📞","Discovery call done","1d ago"],["🎉","Closed — 2 VA seats","3h ago"]],lost:[["✉️","3 touches sent","2d ago"],["🚫","No fit — using in-house","5h ago"]]};
   return base.concat(map[stage]||[]);};
 
-function Sheet({l,onClose}){
-  if(!l) return null; const cl=cluster(l.title); const contacts=contactsFor(l); const stage=l.stage||"new";
-  const acts=activityFor(l,stage);
+const FB_TAGS=["remote_ambiguity","size_misread","too_senior","clinical_role","us_cert_required","intermediary","priority_missed","expired"];
+function Sheet({l,onClose,fb,setFb}){
+  const [v,setV]=useState(null),[tags,setTags]=useState([]),[note,setNote]=useState(""),[saved,setSaved]=useState(false);
+  useEffect(()=>{const e=l&&fb?fb[l.id]:null;setV(e?.v||null);setTags(e?.tags||[]);setNote(e?.note||"");setSaved(false);},[l&&l.id]);
+  if(!l) return null; const cl=cluster(l.title); const contacts=contactsFor(l); const stage=l.stage||"new"; const acts=activityFor(l,stage);
+  const existing=fb&&fb[l.id];
+  const save=()=>{const nf={...fb,[l.id]:{v,tags,note,at:Date.now(),title:l.title,company:l.company}};setFb(nf);saveFb(nf);setSaved(true);};
   return html`<div className="modal" onClick=${onClose}><div className="sheet" onClick=${e=>e.stopPropagation()}>
     <button className="x" onClick=${onClose}>×</button><div className="muted">${l.company} · ${l.location||"US"}</div>
     <h2 style=${{marginTop:2}}>${l.title}</h2>
-    <div className="tags" style=${{margin:"8px 0 12px"}}><span className="tag cl">${cl}</span><span className="tag">${l.size}</span><span className="sc-badge" style=${{color:scoreColor(l.score),background:scoreBg(l.score)}}>score ${l.score} · ${vLabel(l.verdict)}</span>${l.stage&&html`<span className="pill cand">${STAGES.find(s=>s[0]===l.stage)[1]}</span>`}</div>
+    <div className="tags" style=${{margin:"8px 0 12px"}}><span className="tag cl">${cl}</span><span className="tag">${l.size}</span><span className="sc-badge" style=${{color:scoreColor(l.score),background:scoreBg(l.score)}}>score ${l.score} · ${vLabel(l.verdict)}</span>${l.stage&&html`<span className="pill cand">${STAGES.find(s=>s[0]===l.stage)[1]}</span>`}${existing&&html`<span className="pill g">✓ your feedback saved</span>`}</div>
     <div className="panel"><h3>Why this score</h3><${Reasons} text=${l.reasons}/></div>
+    <div className="panel" style=${{borderColor:"var(--blue)",background:"var(--tint)"}}><h3>Your feedback on this job</h3>
+      <div className="verdict-btns">
+        <button className=${"vb "+(v==="agree"?"sel good":"")} onClick=${()=>setV("agree")}>✓ Agree</button>
+        <button className=${"vb "+(v==="too_high"?"sel bad":"")} onClick=${()=>setV("too_high")}>Too high</button>
+        <button className=${"vb "+(v==="dont_drop"?"sel good":"")} onClick=${()=>setV("dont_drop")}>Good, don't drop</button>
+        <button className=${"vb "+(v==="too_low"?"sel good":"")} onClick=${()=>setV("too_low")}>Too low</button></div>
+      <div className="muted">Reason tags</div>
+      <div className="rtags">${FB_TAGS.map(t=>html`<span key=${t} className=${"rt "+(tags.includes(t)?"on":"")} onClick=${()=>setTags(tags.includes(t)?tags.filter(x=>x!==t):[...tags,t])}>${t}</span>`)}</div>
+      <textarea rows="2" placeholder="Note (e.g. 'US-based, needs convincing to hire abroad')" value=${note} onInput=${e=>setNote(e.target.value)}></textarea>
+      <button className="btn primary sm" style=${{width:"100%",marginTop:8}} disabled=${!v} onClick=${save}>${saved?"✓ Saved — feeds the next learning run":"Save feedback"}</button></div>
     <div className="panel"><h3>NPPES size gate</h3><div className="kv"><span className="k">Provider count (stub)</span><span>4 · solo-small</span></div><div className="kv"><span className="k">Excluded?</span><span style=${{color:"var(--green)"}}>No — in ICP</span></div></div>
     <div className="panel"><h3>Contacts</h3>${contacts.map((c,i)=>html`<div key=${i} style=${{padding:"8px 0",borderBottom:i<contacts.length-1?"1px solid var(--line)":"none"}}>
       <div className="row" style=${{justifyContent:"space-between"}}><span style=${{fontWeight:600,color:"var(--ink)"}}>${c.name}</span><span className=${"pill "+(c.verified?"g":"a")}>${c.verified?"verified":"unverified"} · ${c.conf}</span></div>
@@ -385,7 +419,7 @@ function App(){
       ${tab==="tools"&&html`<${Tools}/>`}
       ${tab==="settings"&&html`<${Settings}/>`}
       ${tab==="benchmark"&&html`<${Benchmark}/>`}</div>
-    <${Sheet} l=${sel} onClose=${()=>setSel(null)}/>
+    <${Sheet} l=${sel} onClose=${()=>setSel(null)} fb=${fb} setFb=${setFb}/>
     <div className="tabbar">${TABS.map(t=>html`<button key=${t[0]} className=${tab===t[0]?"on":""} onClick=${()=>setTab(t[0])}><span className="ic">${t[2]}</span>${t[1]}</button>`)}</div></div>`;}
 ReactDOM.createRoot(document.getElementById("root")).render(html`<${App}/>`);
 </script>

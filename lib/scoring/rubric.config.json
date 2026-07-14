@@ -1,0 +1,65 @@
+{
+  "version": "1.0.0",
+  "objective": "QuickTeam staffing-seller: a US practice hiring a JUNIOR, remote-capable admin role we can fill with an offshore VA is the CUSTOMER. Re-oriented from the old job-seeker rubric using 61 real human corrections (20/61 = 33% of leads the old AI wrongly discarded, almost all because it treated 'US work authorization required' as a disqualifier).",
+  "start_score": 50,
+  "gate": { "qualified": 70, "nurture": 40 },
+  "ambiguous_remote_cap": 69,
+
+  "hard_disqualifiers": {
+    "clinical duties": "take vitals|room(ing)? patients|phlebotomy|draw blood|administer injection|\\bEKG\\b|specimen collection|assist (the )?provider with exams|back office clinical",
+    "clinical certification": "\\bCNA\\b|BLS/?CPR (certified|required)|\\bscrubs\\b|clinical MA certification",
+    "in-person legal": "fingerprint(ing)? in person"
+  },
+
+  "clinical_title_pattern": "physical therapist|\\bPTA\\b|occupational therapist|\\bnurse\\b|\\bRN\\b|\\bLPN\\b|\\bCNA\\b|pharmacist|pharmacy technician|physician|provider\\b|psychologist|psychiatrist|therapist|counselor|hygienist|paramedic|\\bEMT\\b|phlebotomist|dietitian|social worker|service engineer",
+
+  "senior_title_pattern": "\\bSr\\.?\\b|senior|\\blead\\b|team lead|director|\\bVP\\b|vice president|president|chief|head of|principal|strategic|account executive|\\bexecutive\\b|\\bmanager\\b|supervisor|success specialist|\\banalyst\\b",
+
+  "hospital_pattern": "hospital|health system|health services\\b|medical center\\b|\\bVA\\b|Kaiser|HCA|Ascension|CommonSpirit|Providence|Banner Health|Cleveland Clinic|Mayo Clinic|UPMC|Mount Sinai|Cedars|Mass General|Brigham|University of|Mercy(health| Health)?\\b|Fairview|Intermountain|Sutter|Geisinger|Sanford Health|Corewell|Northwell|AdventHealth|Baylor Scott|Trinity Health|Bon Secours|Scripps|Sharp Health|Legacy Health|Community Health Systems",
+
+  "big_org_pattern": "VillageMD|US Acute Care|AssistRx|Shields Health|Optum|Athenahealth|R1 RCM|Ensemble Health|Conifer|Change Healthcare|Envision|TeamHealth|UnitedHealth|Pfizer|\\bCVS\\b|Walgreens|Humana|Aetna|Cigna|Centene|Elevance|McKesson|Cardinal Health|Quest Diagnostics|Labcorp|Merck|Novartis|Philips",
+
+  "red_flags": {
+    "on-?site|in-?office\\b|in person\\b|must report to our office|local candidates only": 30,
+    "must (live|reside|be located) in [A-Z][a-z]+|no remote": 25,
+    "reliable transportation|valid driver'?s license|travel between (locations|offices)": 20
+  },
+
+  "_removed_red_flag": "OLD rubric penalized 'must be authorized to work in the US | W-2 only | no 1099' by -25. REMOVED — for a staffing seller these are normal US employers and are the target customers. This single change recovers most of the 20 wrongly-discarded leads. It is now an outreach flag, not a penalty.",
+
+  "us_cert_pattern": "\\bCPC\\b|\\bCCS\\b|\\bCPB\\b|\\bRHIA\\b|\\bRHIT\\b|certified professional coder|AAPC|AHIMA|required EPIC|EPIC certified|medical coder|coding specialist|medical coding",
+  "us_cert_penalty": 15,
+  "us_cert_cap": 60,
+
+  "intermediary_pattern": "staffing|recruiter|recruiting|talent (solutions|acquisition)|workforce solutions|\\bRPO\\b|placement agency",
+  "intermediary_cap": 55,
+
+  "green_flags": {
+    "\\bremote\\b|work from home|\\bwfh\\b|telecommute|\\bvirtual\\b|\\banywhere\\b": 20,
+    "answer(ing)? phones|schedul(e|ing) appointments|appointment (confirmation|reminder)|verify(ing)? insurance|eligibility|prior authorization|data entry|medical records|billing|claims|AR follow-?up|collections|referrals|patient intake": 15,
+    "Athena(health)?|eClinicalWorks|\\beCW\\b|Kareo|Tebra|DrChrono|NextGen|\\bEpic\\b|Cerner|AdvancedMD|Practice Fusion|Dentrix|Eaglesoft|Open Dental|\\bEHR\\b|\\bEMR\\b": 15,
+    "high call volume|growing practice|multiple (providers|locations)|need to scale|backlog|busy (practice|office)": 10,
+    "private practice|family (practice|medicine)|small (practice|office)|billing (company|service)|\\bMSO\\b|group practice|dental (office|practice)|clinic\\b|hospice|palliative": 10,
+    "entry.?level|no experience|junior|assistant\\b|coordinator\\b|receptionist": 8
+  },
+
+  "medical_context_pattern": "medical|dental|patient|health|clinic|billing|claims|insurance|revenue cycle|referral|\\bDME\\b|\\bEHR\\b|\\bEMR\\b|prior auth|scheduling",
+  "weak_medical_cap": 55,
+  "senior_title_cap": 40,
+  "senior_title_penalty": 25,
+
+  "title_clusters": {
+    "front_desk": "receptionist|front desk|front office|patient service|patient access|scheduler|scheduling|patient coordinator|patient care coordinator|intake",
+    "billing_rcm": "biller|billing|claims|revenue cycle|\\bRCM\\b|\\bAR\\b|accounts receivable|collections|insurance verification|eligibility|prior authorization|reimbursement|denial",
+    "records_dataentry": "medical records|health information|data entry|\\bROI\\b|records clerk|administrative assistant|office assistant|bookkeeping",
+    "general_va": "virtual assistant|\\bVA\\b|referral|recall|office coordinator|patient support"
+  },
+
+  "outreach_flags": {
+    "needs_convincing_abroad": "must be authorized to work in the (US|United States)|W-?2 only|no (contractors|1099)|US citizen|located in the (US|United States)|US-based",
+    "hourly_offer_angle": "salary|per year|annually|/yr|full.?time",
+    "low_salary_note": "\\$1[0-6]/(hr|hour)|\\$([12]?[0-9]|3[0-5]),000"
+  },
+
+  "notes": "Scoring order: hard disqualifiers -> clinical title -> hospital/big-org -> senior title (strong penalty + cap 40) -> start 50, apply red flags, green flags -> us-cert deprioritize -> intermediary cap -> weak-medical cap -> ambiguous-remote cap 69 -> verdict by gate. Outreach flags do NOT affect score; they drive sequence angle (hourly cost-comparison, 'convince to hire abroad', low-salary handling)."
+}

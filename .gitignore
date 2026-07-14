@@ -1,0 +1,8 @@
+node_modules/
+__pycache__/
+*.pyc
+.env
+.env.local
+mcp/state.json
+.DS_Store
+data/jobs_raw_*.csv

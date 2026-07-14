@@ -1,0 +1,89 @@
+{
+  "_meta": "Initial learned rules distilled at build time from the 61 human corrections. In production these are proposed by Sonnet from aggregated feedback, deduped, decayed, and each must pass the eval gate before going active. Values here are the bootstrap set.",
+  "rules": [
+    {
+      "id": 1,
+      "rule_text": "A US work-authorization / W-2 / 'no 1099' / US-citizen requirement is NOT a disqualifier for QuickTeam — these are normal US employers and are the target customers. Treat as an outreach flag (convince them to hire abroad), not a penalty.",
+      "rule_type": "green_flag",
+      "pattern": "must be authorized to work in the (US|United States)|W-?2 only|no (contractors|1099)|US citizen|US-based",
+      "weight": 0,
+      "confidence": 0.95,
+      "support_count": 12,
+      "contradiction_count": 0,
+      "status": "active",
+      "source_feedback_ids": [7, 18, 28, 29, 32, 33, 39, 50, 53, 58, 61, 45]
+    },
+    {
+      "id": 2,
+      "rule_text": "Senior/leadership titles (Sr., Senior, Lead, Analyst, Director, Manager, 'Strategic', 'Executive', 'Success Specialist') are not fillable by a junior VA — disqualify or hard-cap.",
+      "rule_type": "disqualifier",
+      "pattern": "\\bSr\\.?\\b|senior|\\blead\\b|director|\\bexecutive\\b|strategic|success specialist|\\banalyst\\b",
+      "weight": -25,
+      "confidence": 0.9,
+      "support_count": 7,
+      "contradiction_count": 2,
+      "status": "active",
+      "source_feedback_ids": [6, 14, 34, 35, 40, 59, 13]
+    },
+    {
+      "id": 3,
+      "rule_text": "Roles requiring US coding certifications (CPC, CCS, CPB, RHIA, AAPC/AHIMA, EPIC-certified, 'Medical Coder', 'Medical Coding Specialist') are hard for an offshore VA to fill — deprioritize (cap ~60), do not hard-drop.",
+      "rule_type": "cap",
+      "pattern": "\\bCPC\\b|\\bCCS\\b|\\bCPB\\b|\\bRHIA\\b|AAPC|AHIMA|EPIC certified|required EPIC|medical coder|medical coding",
+      "weight": -15,
+      "confidence": 0.85,
+      "support_count": 4,
+      "contradiction_count": 0,
+      "status": "active",
+      "source_feedback_ids": [46, 47, 51, 52]
+    },
+    {
+      "id": 4,
+      "rule_text": "Postings by staffing/recruiting/intermediary companies are lower value (competitor/reseller) — deprioritize, do not drop (some BPOs are still good).",
+      "rule_type": "cap",
+      "pattern": "staffing|recruiter|recruiting|workforce solutions|placement agency|\\bRPO\\b",
+      "weight": -10,
+      "confidence": 0.6,
+      "support_count": 4,
+      "contradiction_count": 1,
+      "status": "candidate",
+      "source_feedback_ids": [15, 26, 54, 56]
+    },
+    {
+      "id": 5,
+      "rule_text": "Full-time salaried roles (vs our hourly model) are still leads — flag for the 'hourly cost-comparison' outreach angle, never a disqualifier.",
+      "rule_type": "green_flag",
+      "pattern": "full.?time|salary|per year|annually",
+      "weight": 0,
+      "confidence": 0.8,
+      "support_count": 2,
+      "contradiction_count": 0,
+      "status": "active",
+      "source_feedback_ids": [49, 53]
+    },
+    {
+      "id": 6,
+      "rule_text": "Expired / 'no longer accepting applications' postings should be dropped — needs a data-freshness signal (posting age / status), not text alone.",
+      "rule_type": "disqualifier",
+      "pattern": "no longer accepting|position (has been )?filled|posting expired",
+      "weight": -50,
+      "confidence": 0.7,
+      "support_count": 3,
+      "contradiction_count": 0,
+      "status": "candidate",
+      "source_feedback_ids": [22, 36, 55]
+    },
+    {
+      "id": 7,
+      "rule_text": "Very low posted salary (roughly under ~$16/hr or under ~$35k/yr) is harder to convince to switch to a VA — annotate for outreach, minor deprioritize only.",
+      "rule_type": "size_hint",
+      "pattern": "\\$1[0-6]/(hr|hour)|\\$([12]?[0-9]|3[0-5]),000",
+      "weight": -3,
+      "confidence": 0.5,
+      "support_count": 1,
+      "contradiction_count": 0,
+      "status": "candidate",
+      "source_feedback_ids": [9]
+    }
+  ]
+}

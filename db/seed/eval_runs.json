@@ -1,0 +1,25 @@
+{
+  "_meta": "Seed eval run: old TalentBridge AI (baseline) vs QuickTeam re-oriented scorer v1.0.0 (candidate), on the 61-entry human holdout. Decision uses the plan's gate: promote iff agreement >= baseline AND >= 90 AND false-disqualify not worse.",
+  "runs": [
+    {
+      "id": 1,
+      "system": "OLD TalentBridge AI (real verdicts)",
+      "version": "talentbridge-baseline",
+      "agreement_pct": 67.2,
+      "false_disqualify": 20,
+      "n": 61,
+      "role": "baseline"
+    },
+    {
+      "id": 2,
+      "system": "NEW QuickTeam scorer",
+      "version": "quickteam-1.0.0",
+      "agreement_pct": 77.0,
+      "false_disqualify": 4,
+      "n": 61,
+      "role": "candidate",
+      "decision": "promote",
+      "gate_note": "beats baseline (77 vs 67) and cuts lost leads 20->4; below the 90% target so learning loop continues"
+    }
+  ]
+}

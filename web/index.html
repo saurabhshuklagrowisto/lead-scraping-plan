@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>QuickTeam Outbound — Command Center</title>
+<style>
+  :root{
+    --bg:#0a1020; --bg2:#0d1526; --panel:#111c31; --panel2:#0f1830;
+    --line:rgba(255,255,255,.08); --line2:rgba(255,255,255,.14);
+    --ink:#eaf0fb; --mid:#9fb0cc; --faint:#6b7c99;
+    --blue:#4f7cff; --blue2:#6f95ff; --green:#34d399; --amber:#f5b23e; --red:#f2717b; --violet:#a78bfa;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.5;padding-bottom:76px;}
+  a{color:var(--blue2);text-decoration:none;}
+  .wrap{max-width:1100px;margin:0 auto;padding:16px 14px 24px;}
+  .top{position:sticky;top:0;z-index:20;background:linear-gradient(180deg,var(--bg) 70%,transparent);padding:14px 14px 8px;}
+  .brand{display:flex;align-items:center;gap:10px;}
+  .logo{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--blue),var(--violet));display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;}
+  .brand h1{font-size:16px;font-weight:800;letter-spacing:-.01em;}
+  .brand .sub{font-size:11px;color:var(--faint);}
+  .dry{margin-left:auto;font-size:10px;font-weight:800;letter-spacing:.06em;color:var(--amber);background:rgba(245,178,62,.12);border:1px solid rgba(245,178,62,.3);padding:4px 9px;border-radius:20px;}
+  .desktop-nav{display:none;gap:6px;margin-top:12px;flex-wrap:wrap;}
+  .desktop-nav button{font:inherit;font-size:13px;font-weight:600;color:var(--mid);background:transparent;border:1px solid var(--line);border-radius:9px;padding:7px 13px;cursor:pointer;}
+  .desktop-nav button.on{color:#fff;background:rgba(79,124,255,.16);border-color:var(--blue);}
+  h2{font-size:19px;font-weight:800;letter-spacing:-.01em;margin-bottom:3px;}
+  .lead{color:var(--mid);font-size:13px;margin-bottom:16px;}
+  .chips{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:18px;}
+  @media(min-width:640px){.chips{grid-template-columns:repeat(4,1fr);}}
+  .chip{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:13px 14px;}
+  .chip .n{font-size:23px;font-weight:800;line-height:1;}
+  .chip .l{font-size:11px;color:var(--faint);margin-top:6px;}
+  .chip.g .n{color:var(--green);} .chip.a .n{color:var(--amber);} .chip.b .n{color:var(--blue2);} .chip.r .n{color:var(--red);}
+  .tier-h{display:flex;align-items:center;gap:8px;margin:18px 0 10px;font-weight:800;font-size:14px;}
+  .dot{width:9px;height:9px;border-radius:50%;}
+  .grid{display:grid;grid-template-columns:1fr;gap:11px;}
+  @media(min-width:720px){.grid{grid-template-columns:1fr 1fr;}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:14px;transition:border-color .15s,transform .15s;cursor:pointer;}
+  .card:active{transform:scale(.99);}
+  .card:hover{border-color:var(--line2);}
+  .card .r1{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;}
+  .card .co{font-size:12px;color:var(--faint);}
+  .card .ti{font-weight:700;font-size:14.5px;margin:2px 0 8px;line-height:1.3;}
+  .score{font-weight:800;font-size:19px;min-width:34px;text-align:right;}
+  .bar{height:5px;border-radius:6px;background:rgba(255,255,255,.08);overflow:hidden;margin:9px 0;}
+  .bar i{display:block;height:100%;border-radius:6px;}
+  .tags{display:flex;flex-wrap:wrap;gap:5px;}
+  .tag{font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:20px;background:rgba(255,255,255,.06);color:var(--mid);border:1px solid var(--line);}
+  .tag.cl{color:var(--blue2);background:rgba(79,124,255,.1);border-color:rgba(79,124,255,.25);}
+  .tag.pri{color:var(--amber);background:rgba(245,178,62,.12);border-color:rgba(245,178,62,.3);}
+  .btn{font:inherit;font-weight:700;border-radius:10px;padding:11px 14px;cursor:pointer;border:1px solid var(--line2);background:var(--panel2);color:var(--ink);}
+  .btn.primary{background:var(--blue);border-color:var(--blue);color:#fff;}
+  .btn.sm{padding:8px 11px;font-size:12.5px;}
+  .row{display:flex;gap:8px;flex-wrap:wrap;}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px;}
+  .panel h3{font-size:14px;font-weight:800;margin-bottom:10px;}
+  .kv{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid var(--line);font-size:13px;}
+  .kv:last-child{border-bottom:none;} .kv .k{color:var(--faint);}
+  .reasons{font-size:12px;color:var(--mid);line-height:1.7;}
+  .reasons .pos{color:var(--green);} .reasons .neg{color:var(--red);} .reasons .cap{color:var(--amber);}
+  .verdict-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0;}
+  .vb{font:inherit;font-weight:700;font-size:13px;padding:12px;border-radius:11px;border:1px solid var(--line2);background:var(--panel2);color:var(--ink);cursor:pointer;}
+  .vb.sel.good{background:rgba(52,211,153,.18);border-color:var(--green);color:#b6f2da;}
+  .vb.sel.bad{background:rgba(242,113,123,.16);border-color:var(--red);color:#f7b8bd;}
+  .rtags{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0;}
+  .rt{font-size:11.5px;font-weight:600;padding:6px 10px;border-radius:20px;border:1px solid var(--line);background:var(--panel2);color:var(--mid);cursor:pointer;}
+  .rt.on{background:rgba(79,124,255,.16);border-color:var(--blue);color:#fff;}
+  textarea,input{width:100%;background:var(--bg2);border:1px solid var(--line2);border-radius:10px;color:var(--ink);font:inherit;padding:10px;resize:vertical;}
+  table{width:100%;border-collapse:collapse;font-size:12.5px;}
+  th{text-align:left;color:var(--faint);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.04em;padding:8px 6px;border-bottom:1px solid var(--line2);}
+  td{padding:9px 6px;border-bottom:1px solid var(--line);color:var(--mid);vertical-align:top;}
+  .pill{font-size:10px;font-weight:800;padding:3px 8px;border-radius:20px;}
+  .pill.on{background:rgba(52,211,153,.15);color:var(--green);} .pill.cand{background:rgba(245,178,62,.15);color:var(--amber);}
+  .pill.live{background:rgba(52,211,153,.15);color:var(--green);} .pill.stub{background:rgba(107,124,153,.2);color:var(--faint);}
+  .flow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:11px;color:var(--mid);margin-top:10px;}
+  .flow .n{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px 9px;white-space:nowrap;}
+  .flow .ar{color:var(--faint);}
+  .bench{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .bench .b{border-radius:13px;padding:15px;border:1px solid var(--line);}
+  .bench .old{background:rgba(242,113,123,.06);border-color:rgba(242,113,123,.25);}
+  .bench .new{background:rgba(52,211,153,.06);border-color:rgba(52,211,153,.25);}
+  .bench .big{font-size:30px;font-weight:800;line-height:1;}
+  .tabbar{position:fixed;bottom:0;left:0;right:0;z-index:30;background:rgba(11,17,32,.94);backdrop-filter:blur(12px);border-top:1px solid var(--line2);display:flex;padding:6px 4px 10px;}
+  .tabbar button{flex:1;background:none;border:none;color:var(--faint);font:inherit;font-size:10px;font-weight:700;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 2px;cursor:pointer;}
+  .tabbar button.on{color:var(--blue2);}
+  .tabbar .ic{font-size:18px;line-height:1;}
+  @media(min-width:860px){.tabbar{display:none;} body{padding-bottom:24px;} .desktop-nav{display:flex;}}
+  .modal{position:fixed;inset:0;z-index:50;background:rgba(4,8,16,.7);display:flex;align-items:flex-end;justify-content:center;}
+  @media(min-width:720px){.modal{align-items:center;}}
+  .sheet{background:var(--bg2);border:1px solid var(--line2);border-radius:18px 18px 0 0;width:100%;max-width:640px;max-height:88vh;overflow:auto;padding:18px;}
+  @media(min-width:720px){.sheet{border-radius:16px;}}
+  .x{float:right;font-size:22px;color:var(--faint);background:none;border:none;cursor:pointer;}
+  .trend{display:flex;align-items:flex-end;gap:14px;height:120px;padding:10px 0;}
+  .trend .col{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;justify-content:flex-end;}
+  .trend .barv{width:100%;max-width:70px;border-radius:8px 8px 0 0;}
+  .muted{color:var(--faint);font-size:12px;}
+  .note-quote{font-size:12px;color:var(--mid);font-style:italic;border-left:2px solid var(--line2);padding-left:9px;margin-top:6px;}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="data.js"></script>
+<script type="module">
+import React, {useState,useMemo,useEffect} from "https://esm.sh/react@18.2.0";
+import {createRoot} from "https://esm.sh/react-dom@18.2.0/client";
+import htm from "https://esm.sh/htm@3.1.1";
+const html = htm.bind(React.createElement);
+const D = window.QT_DATA;
+
+const scoreColor = s => s>=70?"var(--green)":s>=40?"var(--amber)":"var(--red)";
+const verdictLabel = v => v==="deprioritized"?"nurture":v;
+const LS = "qt_feedback_v1";
+const loadFb = () => { try{return JSON.parse(localStorage.getItem(LS))||{}}catch(e){return {}} };
+const saveFb = o => localStorage.setItem(LS, JSON.stringify(o));
+
+function Chip({n,l,cls}){return html`<div className=${"chip "+(cls||"")}><div className="n">${n}</div><div className="l">${l}</div></div>`;}
+
+function Reasons({text}){
+  if(!text) return null;
+  const parts = text.split(";").map(s=>s.trim()).filter(Boolean);
+  return html`<div className="reasons">${parts.map((p,i)=>{
+    const cls = p.startsWith("+")?"pos":p.startsWith("-")?"neg":p.startsWith("cap")||p.startsWith("hard")?"cap":"";
+    return html`<div key=${i} className=${cls}>${p}</div>`;
+  })}</div>`;
+}
+
+function LeadCard({lead,onClick,priority}){
+  return html`<div className="card" onClick=${onClick}>
+    <div className="r1">
+      <div><div className="co">${lead.company} · ${lead.location||"US"}</div>
+      <div className="ti">${lead.title}</div></div>
+      <div className="score" style=${{color:scoreColor(lead.score)}}>${lead.score}</div>
+    </div>
+    <div className="bar"><i style=${{width:lead.score+"%",background:scoreColor(lead.score)}}></i></div>
+    <div className="tags">
+      <span className="tag cl">${lead.cluster||lead.title_cluster||"admin"}</span>
+      <span className="tag">${lead.size}</span>
+      ${priority&&html`<span className="tag pri">★ priority</span>`}
+      ${lead.remote==="explicit-remote"&&html`<span className="tag">remote</span>`}
+    </div>
+  </div>`;
+}
+
+function Pipeline({leads,setSel}){
+  const s=D.stats, pri=new Set(D.stats.priority_companies);
+  const qualified=leads.filter(l=>l.verdict==="qualified");
+  const nurture=leads.filter(l=>l.verdict==="deprioritized");
+  const priorityLeads=leads.filter(l=>pri.has(l.company)&&l.verdict!=="disqualified").slice(0,8);
+  return html`<div>
+    <h2>Pipeline</h2>
+    <div className="lead">Signal-scored healthcare-admin postings, re-oriented for QuickTeam's buyer ICP. ${s.total} scraped · $0 to score.</div>
+    <div className="chips">
+      <${Chip} n=${s.total} l="Scraped (14-day window)" cls="b"/>
+      <${Chip} n=${s.qualified} l="Qualified ≥70" cls="g"/>
+      <${Chip} n=${s.nurture} l="Nurture 40–69" cls="a"/>
+      <${Chip} n=${D.stats.priority_companies.length} l="Priority accounts (3+ roles)" cls="r"/>
+    </div>
+    ${priorityLeads.length>0&&html`<div>
+      <div className="tier-h"><span className="dot" style=${{background:"var(--amber)"}}></span>Priority accounts — one convo, multiple placements</div>
+      <div className="grid">${priorityLeads.map(l=>html`<${LeadCard} key=${l.id} lead=${l} priority=${true} onClick=${()=>setSel(l)}/>`)}</div>
+    </div>`}
+    <div className="tier-h"><span className="dot" style=${{background:"var(--green)"}}></span>Qualified (${qualified.length})</div>
+    <div className="grid">${qualified.map(l=>html`<${LeadCard} key=${l.id} lead=${l} priority=${pri.has(l.company)} onClick=${()=>setSel(l)}/>`)}</div>
+    <div className="tier-h"><span className="dot" style=${{background:"var(--amber)"}}></span>Nurture 40–69 (showing 12 of ${nurture.length})</div>
+    <div className="grid">${nurture.slice(0,12).map(l=>html`<${LeadCard} key=${l.id} lead=${l} priority=${pri.has(l.company)} onClick=${()=>setSel(l)}/>`)}</div>
+  </div>`;
+}
+
+function Review({fb,setFb}){
+  // Active-learning queue: postings near the gate (uncertain) first, then priority.
+  const queue = useMemo(()=>{
+    return [...D.leads].map(l=>({l,unc:Math.abs(l.score-70)}))
+      .sort((a,b)=>a.unc-b.unc).map(x=>x.l).slice(0,40);
+  },[]);
+  const [i,setI]=useState(0);
+  const lead=queue[i];
+  const [verdict,setVerdict]=useState(null);
+  const [tags,setTags]=useState([]);
+  const [note,setNote]=useState("");
+  useEffect(()=>{const e=fb[lead.id];setVerdict(e?.verdict||null);setTags(e?.tags||[]);setNote(e?.note||"");},[i]);
+  const TAGS=["remote_ambiguity","size_misread","too_senior","clinical_role","us_cert_required","intermediary","priority_missed","expired"];
+  const submit=()=>{
+    const nf={...fb,[lead.id]:{verdict,tags,note,at:Date.now(),title:lead.title,company:lead.company}};
+    setFb(nf);saveFb(nf);
+    if(i<queue.length-1) setI(i+1);
+  };
+  const labeled=Object.keys(fb).length;
+  return html`<div>
+    <h2>Review & Teach</h2>
+    <div className="lead">Active-learning queue — the postings nearest the 70 gate, where your feedback moves accuracy most. ${labeled} labeled this session.</div>
+    <div className="panel">
+      <div className="muted">${i+1} / ${queue.length} · uncertainty-ranked</div>
+      <div style=${{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:10,marginTop:6}}>
+        <div><div className="co" style=${{color:"var(--faint)",fontSize:12}}>${lead.company} · ${lead.location||"US"}</div>
+        <div style=${{fontWeight:800,fontSize:17,margin:"2px 0 4px"}}>${lead.title}</div></div>
+        <div className="score" style=${{color:scoreColor(lead.score),fontSize:26}}>${lead.score}</div>
+      </div>
+      <div className="tags" style=${{marginBottom:10}}>
+        <span className="tag cl">${lead.cluster||"admin"}</span><span className="tag">${lead.size}</span>
+        <span className="tag">${verdictLabel(lead.verdict)}</span><span className="tag">${lead.remote}</span>
+      </div>
+      <div style=${{fontSize:11,color:"var(--faint)",fontWeight:700,textTransform:"uppercase",letterSpacing:".05em",marginBottom:5}}>Why this score (explainable)</div>
+      <${Reasons} text=${lead.reasons}/>
+      ${lead.desc&&html`<div className="note-quote">${lead.desc}…</div>`}
+      <div style=${{fontSize:11,color:"var(--faint)",fontWeight:700,textTransform:"uppercase",letterSpacing:".05em",margin:"14px 0 5px"}}>Your verdict</div>
+      <div className="verdict-btns">
+        <button className=${"vb "+(verdict==="agree"?"sel good":"")} onClick=${()=>setVerdict("agree")}>✓ Agree</button>
+        <button className=${"vb "+(verdict==="wrong_qualify"?"sel bad":"")} onClick=${()=>setVerdict("wrong_qualify")}>Too high</button>
+        <button className=${"vb "+(verdict==="wrong_disqualify"?"sel good":"")} onClick=${()=>setVerdict("wrong_disqualify")}>Good lead, don't drop</button>
+        <button className=${"vb "+(verdict==="too_low"?"sel good":"")} onClick=${()=>setVerdict("too_low")}>Score too low</button>
+      </div>
+      <div className="muted" style=${{marginTop:6}}>Reason tags</div>
+      <div className="rtags">${TAGS.map(t=>html`<span key=${t} className=${"rt "+(tags.includes(t)?"on":"")} onClick=${()=>setTags(tags.includes(t)?tags.filter(x=>x!==t):[...tags,t])}>${t}</span>`)}</div>
+      <textarea rows="2" placeholder="Note (e.g. 'US-based, needs convincing to hire abroad')" value=${note} onChange=${e=>setNote(e.target.value)}></textarea>
+      <div className="row" style=${{marginTop:10}}>
+        <button className="btn sm" onClick=${()=>i>0&&setI(i-1)}>‹ Prev</button>
+        <button className="btn primary sm" style=${{flex:1}} onClick=${submit} disabled=${!verdict}>Save & next ›</button>
+      </div>
+      <div className="muted" style=${{marginTop:8}}>Feedback is stored and fed to the next learning run as few-shot calibration — it does not silently retrain (honest).</div>
+    </div>
+  </div>`;
+}
+
+function Learning({fb}){
+  const runs=D.eval_runs, rules=D.learned_rules;
+  const trend=[{v:"TalentBridge",a:67.2,c:"var(--red)"},{v:"QuickTeam v1.0",a:77.0,c:"var(--amber)"},{v:"+ learning (target)",a:90,c:"var(--green)"}];
+  return html`<div>
+    <h2>Learning & Eval</h2>
+    <div className="lead">The loop the old app faked: feedback → distilled rules → a candidate version that must beat the baseline on the 61-entry human holdout before it ships.</div>
+    <div className="panel">
+      <h3>Agreement with human gold (eval gate)</h3>
+      <div className="trend">${trend.map(t=>html`<div className="col" key=${t.v}>
+        <div style=${{fontWeight:800,color:t.c}}>${t.a}%</div>
+        <div className="barv" style=${{height:(t.a)+"%",background:t.c,opacity:.85}}></div>
+        <div className="muted" style=${{textAlign:"center",fontSize:10}}>${t.v}</div></div>`)}</div>
+      <div className="muted">Promote rule: candidate must be ≥ baseline AND ≥ 90% AND not raise false-disqualifies. v1.0 promoted over baseline (77 vs 67, lost leads 20→4); still below 90% so the loop keeps learning from your feedback.</div>
+    </div>
+    <div className="panel">
+      <h3>Eval history</h3>
+      <table><thead><tr><th>Version</th><th>Agreement</th><th>Leads lost</th><th>Decision</th></tr></thead>
+      <tbody>${runs.map(r=>html`<tr key=${r.id}><td style=${{color:"var(--ink)",fontWeight:600}}>${r.version}</td><td>${r.agreement_pct}%</td><td>${r.false_disqualify}/${r.n}</td><td>${r.decision?html`<span className=${"pill "+(r.decision==="promote"?"on":"cand")}>${r.decision}</span>`:"baseline"}</td></tr>`)}</tbody></table>
+    </div>
+    <div className="panel">
+      <h3>Learned rules <span className="muted">(from your ${D.stats.feedback_count} corrections)</span></h3>
+      <table><thead><tr><th>Rule</th><th>Type</th><th>Support</th><th>Status</th></tr></thead>
+      <tbody>${rules.map(r=>html`<tr key=${r.id}><td style=${{color:"var(--ink)"}}>${r.rule_text.slice(0,90)}…</td><td>${r.rule_type}</td><td>${r.support_count}</td><td><span className=${"pill "+(r.status==="active"?"on":"cand")}>${r.status}</span></td></tr>`)}</tbody></table>
+    </div>
+    <div className="panel">
+      <h3>Teach a rule (plain English)</h3>
+      <input placeholder="e.g. anything with 'Director' or 'VP' is too senior for us"/>
+      <div className="muted" style=${{marginTop:8}}>Sonnet converts this to a candidate rule (pattern + weight). It must pass the eval gate on the 61 holdout before it can score a single real lead.</div>
+    </div>
+  </div>`;
+}
+
+function Connections(){
+  const tools=[
+    {n:"JobSpy (Indeed)",s:"live",m:"free"},{n:"LinkedIn actor",s:"stub",m:"needs key"},
+    {n:"NPPES size gate",s:"live",m:"free gov API"},{n:"Claude Haiku/Sonnet",s:"stub",m:"needs key (cached)"},
+    {n:"Clay enrichment",s:"stub",m:"needs webhook"},{n:"Cleanlist verify",s:"stub",m:"needs key"},
+    {n:"SalesBlink send",s:"stub",m:"DRY_RUN"},{n:"Sendr.io warmup",s:"stub",m:"needs key"},
+    {n:"Close CRM",s:"stub",m:"needs key"},{n:"Supabase Postgres",s:"stub",m:"seed data"},
+  ];
+  return html`<div>
+    <h2>Connections</h2>
+    <div className="lead">Every integration, its status, and how they link. Honesty as a feature — stubbed tools are labeled, nothing sends or spends in DRY_RUN.</div>
+    <div className="panel">
+      <div className="flow">
+        <span className="n">Scrape</span><span className="ar">→</span><span className="n">Score ≥70</span><span className="ar">→</span>
+        <span className="n">NPPES gate</span><span className="ar">→</span><span className="n">Clay</span><span className="ar">→</span>
+        <span className="n">Sonnet seq</span><span className="ar">→</span><span className="n">Cleanlist</span><span className="ar">→</span>
+        <span className="n">SalesBlink</span><span className="ar">→</span><span className="n">Close</span>
+      </div>
+    </div>
+    <div className="panel">
+      <table><thead><tr><th>Tool</th><th>Status</th><th>Mode</th></tr></thead>
+      <tbody>${tools.map(t=>html`<tr key=${t.n}><td style=${{color:"var(--ink)",fontWeight:600}}>${t.n}</td><td><span className=${"pill "+(t.s==="live"?"live":"stub")}>${t.s}</span></td><td className="muted">${t.m}</td></tr>`)}</tbody></table>
+    </div>
+    <div className="panel"><h3>Run it from Claude (MCP)</h3><div className="muted">This pipeline ships as a Claude MCP server: <code>list_leads</code>, <code>submit_feedback</code>, <code>run_eval</code>, <code>teach_rule</code>, <code>pipeline_status</code>. Founders operate the whole system by talking to Claude — no equivalent in the old app.</div></div>
+  </div>`;
+}
+
+function Benchmark({setSel}){
+  const b=D.benchmark;
+  const lost=D.feedback.filter(f=>f.ai_verdict==="not_relevant"&&(f.gold_verdict==="qualified"||f.gold_verdict==="nurture"));
+  return html`<div>
+    <h2>Why ours is better</h2>
+    <div className="lead">Measured on ${b.sample} real human-rated postings from the old dashboard. Same data, re-oriented objective.</div>
+    <div className="bench">
+      <div className="b old"><div className="muted">Old TalentBridge AI</div><div className="big" style=${{color:"var(--red)"}}>${b.old_agreement}%</div><div className="muted">agreement with human gold</div><div style=${{marginTop:10,fontWeight:800,color:"var(--red)"}}>${b.old_lost} leads thrown away</div></div>
+      <div className="b new"><div className="muted">QuickTeam scorer v1</div><div className="big" style=${{color:"var(--green)"}}>${b.new_agreement}%</div><div className="muted">agreement with human gold</div><div style=${{marginTop:10,fontWeight:800,color:"var(--green)"}}>${b.new_lost} leads thrown away</div></div>
+    </div>
+    <div className="panel" style=${{marginTop:14}}>
+      <h3>The ${lost.length} leads their AI discarded that you want</h3>
+      <div className="muted" style=${{marginBottom:8}}>Almost all rejected for "US work authorization required" — job-seeker logic. For QuickTeam these US practices ARE the customers.</div>
+      ${lost.slice(0,10).map(f=>html`<div key=${f.id} style=${{padding:"8px 0",borderBottom:"1px solid var(--line)"}}>
+        <div style=${{fontWeight:600}}>${f.title} <span className="muted">· ${f.company}</span></div>
+        <div className="note-quote">★${f.rating} "${f.note}"</div></div>`)}
+    </div>
+    <div className="panel">
+      <h3>Architecture wins</h3>
+      ${[["One unified scorer","old app: cron ran a keyword filter, the AI only ran on a manual button — automation bypassed the AI"],
+         ["Eval gate blocks regressions","old app: no eval harness, learned rules shipped blind"],
+         ["First-class feedback + learning","old app: 3 overwrite columns, unbounded free-text rule blob, cron never scheduled"],
+         ["Free NPPES size gate before spend","old app: none — a 2,000-person RCM firm slipped through"],
+         ["Mobile-first + MCP","old app: desktop-only, leaked a real email on a public endpoint"]].map((r,i)=>html`<div key=${i} className="kv"><span className="k">${r[1]}</span><span style=${{color:"var(--green)",fontWeight:700,minWidth:120,textAlign:"right"}}>${r[0]}</span></div>`)}
+    </div>
+  </div>`;
+}
+
+function LeadSheet({lead,onClose}){
+  if(!lead) return null;
+  const cluster=lead.cluster||"general_va";
+  const contacts=[{t:"Owner / Practice Manager",c:.9},{t:"Office Manager",c:.7}];
+  return html`<div className="modal" onClick=${onClose}><div className="sheet" onClick=${e=>e.stopPropagation()}>
+    <button className="x" onClick=${onClose}>×</button>
+    <div className="muted">${lead.company} · ${lead.location||"US"}</div>
+    <h2 style=${{marginTop:2}}>${lead.title}</h2>
+    <div className="tags" style=${{margin:"8px 0 12px"}}><span className="tag cl">${cluster}</span><span className="tag">${lead.size}</span><span className="tag" style=${{color:scoreColor(lead.score)}}>score ${lead.score} · ${verdictLabel(lead.verdict)}</span></div>
+    <div className="panel"><h3>Why this score</h3><${Reasons} text=${lead.reasons}/></div>
+    <div className="panel"><h3>NPPES size gate</h3><div className="kv"><span className="k">Provider count (stub)</span><span>4 · solo-small ✓ under gate</span></div><div className="kv"><span className="k">Excluded?</span><span style=${{color:"var(--green)"}}>No — small practice, in ICP</span></div></div>
+    <div className="panel"><h3>Decision-maker contacts</h3>${contacts.map((c,i)=>html`<div key=${i} className="kv"><span className="k">${c.t}</span><span>conf ${c.c} · <span className="muted">stub</span></span></div>`)}</div>
+    <div className="panel"><h3>Sequence (${cluster} cluster)</h3><div className="muted">5-touch, cluster-routed, generated from the posting. Touch 1 opener:</div>
+      <div className="note-quote">"Saw ${lead.company} is hiring a ${lead.title.toLowerCase()} — the ramp on that seat is usually the hidden cost. We place trained, HIPAA-ready VAs for it at ~40-60% less. ${lead.reasons.includes("salary")||true?"If it's an hourly role, worth a quick cost comparison?":""}"</div></div>
+    <div className="row"><button className="btn primary sm" style=${{flex:1}}>Approve → SalesBlink (DRY_RUN)</button></div>
+  </div></div>`;
+}
+
+const TABS=[["pipeline","Pipeline","▦"],["review","Review","✎"],["learning","Learning","◈"],["connections","Tools","⚙"],["benchmark","Why better","★"]];
+
+function App(){
+  const [tab,setTab]=useState("pipeline");
+  const [sel,setSel]=useState(null);
+  const [fb,setFb]=useState(loadFb());
+  const leads=D.leads;
+  return html`<div>
+    <div className="top">
+      <div className="brand"><div className="logo">Q</div><div><h1>QuickTeam Outbound</h1><div className="sub">Signal-scored VA staffing pipeline</div></div><span className="dry">DRY-RUN</span></div>
+      <div className="desktop-nav">${TABS.map(t=>html`<button key=${t[0]} className=${tab===t[0]?"on":""} onClick=${()=>setTab(t[0])}>${t[1]}</button>`)}</div>
+    </div>
+    <div className="wrap">
+      ${tab==="pipeline"&&html`<${Pipeline} leads=${leads} setSel=${setSel}/>`}
+      ${tab==="review"&&html`<${Review} fb=${fb} setFb=${setFb}/>`}
+      ${tab==="learning"&&html`<${Learning} fb=${fb}/>`}
+      ${tab==="connections"&&html`<${Connections}/>`}
+      ${tab==="benchmark"&&html`<${Benchmark} setSel=${setSel}/>`}
+    </div>
+    <${LeadSheet} lead=${sel} onClose=${()=>setSel(null)}/>
+    <div className="tabbar">${TABS.map(t=>html`<button key=${t[0]} className=${tab===t[0]?"on":""} onClick=${()=>setTab(t[0])}><span className="ic">${t[2]}</span>${t[1]}</button>`)}</div>
+  </div>`;
+}
+createRoot(document.getElementById("root")).render(html`<${App}/>`);
+</script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+# Netlify: the DRY-RUN dashboard is static — publish the web/ folder directly.
+[build]
+  publish = "web"
+  command = ""
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "SAMEORIGIN"
+    Referrer-Policy = "strict-origin-when-cross-origin"

@@ -24,9 +24,13 @@ feedback ─► few-shot (pgvector kNN over feedback) ─► distilled learned_r
 `lib/scoring/rubric.config.json` — weights, flags, caps, gate, title clusters, outreach flags. Read by the Python scorer today and the TS scorer in the Next.js/Supabase build. The re-orientation from job-seeker → staffing-seller lives here (notably: US work-authorization is NOT a disqualifier; senior titles are; US coding certs deprioritize).
 
 ## Surfaces
-- **web/** — the mobile-first DRY-RUN dashboard (static, deploys anywhere). Screens: Pipeline, Review, Learning, Tools, Why-better.
+- **web/** — the mobile-first DRY-RUN dashboard (static, deploys anywhere). Screens: Pipeline, Jobs, CRM, Review, Outreach, Learning, Tools, Settings, Why-better.
 - **mcp/server.js** — Claude MCP server exposing the pipeline as tools (`list_leads`, `submit_feedback`, `run_eval`, `teach_rule`, `pipeline_status`, `learning_status`). Add to Claude Desktop/Code to operate the whole system conversationally.
-- **Next.js + Supabase (planned P2)** — the full-stack app: auth-gated dashboard, API routes, Postgres + pgvector, the tables in the plan (`companies`, `job_postings`, `scores`, `feedback`, `scoring_versions`, `learned_rules`, `eval_runs`, `labeled_holdout`, `contacts`, `sequences`, `integrations`). The current `web/` is its DRY-RUN front-end.
+- **db/migrations/** — real Postgres schema (`001_init.sql`, RLS policies) + a seed generator (`002_seed.py`) that loads the exact same 259 postings / 61 holdout / 7 learned rules the demo shows, so a fresh Supabase project starts identical to the DRY-RUN.
+- **functions/api/** — Cloudflare Pages Functions (the real backend): `leads`, `feedback`, `pipeline-status`, `eval-run` (JS port of the eval harness, verified byte-for-byte parity with the Python version — 77% agreement / 4 false-disqualify on the same holdout), `teach-rule`, `notify-hot-leads`, `webhooks/enrichment`. All read `SUPABASE_URL`/`SUPABASE_SERVICE_KEY` from Cloudflare Pages environment variables — never hardcoded.
+- **.github/workflows/** — the 3 scraping cadences from the plan, as real scheduled GitHub Actions (free): `scrape-speed-sweep.yml` (every 3h, Indeed-only via `scrape.py --priority-only`), `scrape-daily-core.yml` (06:00 ET, full source set), `scrape-weekly-deep.yml` (Sundays, + `rescore_nurture.py` re-scores the nurture pool against the current rubric + triggers `/api/eval-run`).
+- **lib/notify/adapters.js** — pluggable SDR notification layer (Slack / Zoho Cliq / generic webhook for WhatsApp-via-Twilio or Teams). Chat platform not yet chosen — swap `NOTIFY_CHANNEL` + `NOTIFY_WEBHOOK_URL` env vars, no code change needed.
+- **Deploy target: Cloudflare Pages.** Static `web/` deploys today with zero dependencies. The `functions/` API layer goes live the moment `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`, and `CRON_SECRET` are set as Cloudflare Pages environment variables — this is what turns real-time scraping + live SDR-visible contacts (name/LinkedIn/phone from Cleanlist) from stubbed to real.
 
 ## MCP quick add (Claude Desktop / Code)
 ```json

@@ -1,0 +1,22 @@
+name: Daily core scrape (all titles, Indeed + LinkedIn)
+on:
+  schedule:
+    - cron: "0 11 * * *"   # 06:00 ET (11:00 UTC)
+  workflow_dispatch: {}
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -r pipeline/requirements.txt
+      - run: python pipeline/scrape.py
+      - run: python pipeline/score.py
+      - name: Push to Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: python pipeline/load_to_supabase.py

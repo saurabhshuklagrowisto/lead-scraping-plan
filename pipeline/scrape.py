@@ -177,8 +177,16 @@ def from_jobspy() -> list[dict]:
 
 
 def main() -> None:
+    import argparse
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--priority-only", action="store_true",
+                     help="Speed-sweep mode: Indeed only (source of ~95%% of qualified leads), skips the free boards for a fast, cheap 3-hourly run.")
+    args = ap.parse_args()
+
+    sources = (from_jobspy,) if args.priority_only else (from_jobspy, from_remotive, from_jobicy, from_remoteok)
+
     jobs: dict[str, dict] = {}
-    for fetch in (from_jobspy, from_remotive, from_jobicy, from_remoteok):
+    for fetch in sources:
         batch = fetch()
         for j in batch:
             jobs.setdefault(j["id"], j)          # dedupe on company+title

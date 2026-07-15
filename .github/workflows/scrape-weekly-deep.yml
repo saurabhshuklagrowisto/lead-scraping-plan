@@ -1,0 +1,30 @@
+name: Weekly deep (niche boards + re-score nurture pool)
+on:
+  schedule:
+    - cron: "0 12 * * 0"   # Sundays 07:00 ET (12:00 UTC)
+  workflow_dispatch: {}
+
+jobs:
+  scrape-and-rescore:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -r pipeline/requirements.txt
+      - run: python pipeline/scrape.py
+      - run: python pipeline/score.py
+      - name: Push new postings to Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: python pipeline/load_to_supabase.py
+      - name: Re-score the nurture pool against the current active rubric
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: python pipeline/rescore_nurture.py
+      - name: Run the eval gate on the current rubric version
+        run: |
+          curl -s -X POST "${{ secrets.APP_URL }}/api/eval-run" -H "x-cron-secret: ${{ secrets.CRON_SECRET }}" || echo "APP_URL not set yet - skipping live eval trigger"

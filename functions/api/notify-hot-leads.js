@@ -22,7 +22,7 @@ export async function onRequestPost({ request, env }) {
 
     let sent = 0;
     for (const c of hot) {
-      await notify({ type: "hot_lead", company: c.name, roleCount: c.open_roles_count, score: null });
+      await notify({ type: "hot_lead", company: c.name, roleCount: c.open_roles_count, score: null, appUrl: env.APP_URL });
       sent++;
     }
     return json({ ok: true, notified: sent });

@@ -392,9 +392,11 @@ function Benchmark(){
 const STAGES=[["new","New Lead","var(--faint)"],["contacted","Contacted","var(--blue)"],["replied","Replied","var(--violet)"],["meeting","Meeting Booked","var(--amber)"],["won","Won","var(--green)"],["lost","Lost","var(--red)"]];
 const hashInt=s=>{let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))>>>0;return h;};
 const firstNames=["Sarah","Mike","Dr. Patel","Linda","James","Ana","Robert","Emily","David","Grace"];
+// Auto-enrichment fetches PHONE + LinkedIn only (10 credits). Email is a manual, on-demand
+// action (1 credit) — so the stub reflects that: email starts null until "enriched" client-side.
 const contactsFor=l=>{const h=hashInt(l.id);const solo=l.size==="solo-small";
-  const c=[{name:firstNames[h%firstNames.length]+" "+["Ross","Kim","Nguyen","Adams","Lopez"][h%5],title:solo?"Owner / Practice Owner":"Practice Administrator",email:"owner@"+(l.company||"co").toLowerCase().replace(/[^a-z]/g,"").slice(0,12)+".com",phone:"+1 (5"+(h%90+10)+") 55"+(h%9)+"-0"+(h%89+10),linkedin:"linkedin.com/in/"+(l.company||"x").toLowerCase().replace(/[^a-z]/g,"").slice(0,10),conf:0.9,verified:true}];
-  if(!solo)c.push({name:firstNames[(h+3)%firstNames.length]+" "+["Office Mgr"][0],title:"Office Manager",email:"office@"+(l.company||"co").toLowerCase().replace(/[^a-z]/g,"").slice(0,12)+".com",phone:"+1 (5"+(h%80+15)+") 55"+(h%8)+"-0"+(h%70+20),linkedin:"linkedin.com/in/officemgr",conf:0.72,verified:false});
+  const c=[{id:"c1-"+l.id,name:firstNames[h%firstNames.length]+" "+["Ross","Kim","Nguyen","Adams","Lopez"][h%5],title:solo?"Owner / Practice Owner":"Practice Administrator",email:null,phone:"+1 (5"+(h%90+10)+") 55"+(h%9)+"-0"+(h%89+10),linkedin:"linkedin.com/in/"+(l.company||"x").toLowerCase().replace(/[^a-z]/g,"").slice(0,10),conf:0.9,verified:true}];
+  if(!solo)c.push({id:"c2-"+l.id,name:firstNames[(h+3)%firstNames.length]+" "+["Office Mgr"][0],title:"Office Manager",email:null,phone:"+1 (5"+(h%80+15)+") 55"+(h%8)+"-0"+(h%70+20),linkedin:"linkedin.com/in/officemgr",conf:0.72,verified:false});
   return c;};
 // Salesforce-style: one ACCOUNT per company, with its open roles as opportunities. Dedupes multi-posting
 // companies (e.g. MedBill x3 -> one account, 3 roles) and boosts score — more open roles = hotter buying signal.
@@ -426,7 +428,13 @@ const activityFor=(l,stage)=>{const base=[["📥","Lead created from Indeed post
 const FB_TAGS=["remote_ambiguity","size_misread","too_senior","clinical_role","us_cert_required","intermediary","priority_missed","expired"];
 function Sheet({l,onClose,fb,setFb}){
   const [v,setV]=useState(null),[tags,setTags]=useState([]),[note,setNote]=useState(""),[saved,setSaved]=useState(false);
-  useEffect(()=>{const e=l&&fb?fb[l.id]:null;setV(e?.v||null);setTags(e?.tags||[]);setNote(e?.note||"");setSaved(false);},[l&&l.id]);
+  const [emailState,setEmailState]=useState({}); // contactId -> 'loading' | 'done'
+  useEffect(()=>{const e=l&&fb?fb[l.id]:null;setV(e?.v||null);setTags(e?.tags||[]);setNote(e?.note||"");setSaved(false);setEmailState({});},[l&&l.id]);
+  const enrichEmail=(contactId,company)=>{
+    setEmailState(s=>({...s,[contactId]:"loading"}));
+    // DRY-RUN simulation of POST /api/enrich-email — 1 credit, manual, on-demand.
+    setTimeout(()=>setEmailState(s=>({...s,[contactId]:"done"})),700);
+  };
   if(!l) return null;
   const acct=!!l.roles;                       // account (deduped company) vs single posting
   const heading=acct?l.company:l.title;
@@ -460,10 +468,19 @@ function Sheet({l,onClose,fb,setFb}){
       <textarea rows="2" placeholder="Note (e.g. 'US-based, needs convincing to hire abroad')" value=${note} onInput=${e=>setNote(e.target.value)}></textarea>
       <button className="btn primary sm" style=${{width:"100%",marginTop:8}} disabled=${!v} onClick=${save}>${saved?"✓ Saved — feeds the next learning run":"Save feedback"}</button></div>
     <div className="panel"><h3>NPPES size gate</h3><div className="kv"><span className="k">Provider count (stub)</span><span>4 · solo-small</span></div><div className="kv"><span className="k">Excluded?</span><span style=${{color:"var(--green)"}}>No — in ICP</span></div></div>
-    <div className="panel"><h3>Contacts</h3>${contacts.map((c,i)=>html`<div key=${i} style=${{padding:"8px 0",borderBottom:i<contacts.length-1?"1px solid var(--line)":"none"}}>
+    <div className="panel"><h3>Contacts</h3>${contacts.map((c,i)=>{
+      const st=emailState[c.id];
+      const emailVal=c.email||(st==="done"?"j."+(c.name||"contact").split(" ")[0].toLowerCase()+"@"+(l.company||"co").toLowerCase().replace(/[^a-z]/g,"").slice(0,12)+".com":null);
+      return html`<div key=${i} style=${{padding:"8px 0",borderBottom:i<contacts.length-1?"1px solid var(--line)":"none"}}>
       <div className="row" style=${{justifyContent:"space-between"}}><span style=${{fontWeight:600,color:"var(--ink)"}}>${c.name}</span><span className=${"pill "+(c.verified?"g":"a")}>${c.verified?"verified":"unverified"} · ${c.conf}</span></div>
-      <div className="muted">${c.title}</div><div className="muted">✉ ${c.email} · ☎ ${c.phone}</div><div className="muted">in ${c.linkedin}</div></div>`)}
-      <div className="muted" style=${{marginTop:6}}>Enriched via Clay waterfall (stub) · LinkedIn pulled per contact</div></div>
+      <div className="muted">${c.title}</div>
+      <div className="muted">☎ ${c.phone} · in ${c.linkedin}</div>
+      <div className="row" style=${{marginTop:4,alignItems:"center"}}>
+        ${emailVal?html`<span className="muted">✉ ${emailVal}</span>`
+          :st==="loading"?html`<span className="muted">Enriching email…</span>`
+          :html`<button className="btn sm" onClick=${()=>enrichEmail(c.id,l.company)}>✉ Enrich email (1 credit)</button>`}
+      </div></div>`;})}
+      <div className="muted" style=${{marginTop:6}}>Phone + LinkedIn come automatically (Cleanlist, phone_only, 10 credits). Email is manual, on demand, 1 credit each.</div></div>
     <div className="panel"><h3>Activity</h3><div className="feed">${acts.map((a,i)=>html`<div className="fi" key=${i}><span className="ic">${a[0]}</span><div><div className="t">${a[1]}</div><div className="m">${a[2]}</div></div></div>`)}</div></div>
     <div className="panel"><h3>Sequence (${cl} cluster)</h3><div className="muted">5-touch, cluster-routed. Touch 1 opener:</div>
       <div className="quote">${acct&&l.priority

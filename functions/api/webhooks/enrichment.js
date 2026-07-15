@@ -7,6 +7,10 @@
 // SECURITY NOTE: Cleanlist does not sign webhook payloads (confirmed in their docs) — the
 // only defense is checking workflow_id against a request WE actually submitted and recorded
 // in enrichment_requests. Anything else is rejected. This is not optional.
+//
+// Branches on enrichment_requests.contact_query.mode:
+//   'auto_phone'   -> INSERT a new contact (name + phone + LinkedIn; no email — that's manual)
+//   'manual_email' -> UPDATE the existing contact_id with the email only
 import { getSupabase, json, errorJson } from "../../_lib/supabase.js";
 
 export async function onRequestPost({ request, env }) {
@@ -17,39 +21,47 @@ export async function onRequestPost({ request, env }) {
 
     const supabase = getSupabase(env);
 
-    // Verify: this workflow_id must be one we submitted ourselves.
     const { data: reqRow, error: findErr } = await supabase
       .from("enrichment_requests").select("*").eq("workflow_id", workflow_id).single();
     if (findErr || !reqRow) {
-      // Do not process unknown workflow_ids — could be forged/replayed since there's no signature.
       return errorJson("unknown workflow_id, ignoring", 202);
     }
     if (reqRow.status !== "pending") {
       return json({ ok: true, note: "already processed, ignoring duplicate delivery" });
     }
 
+    const mode = reqRow.contact_query?.mode || "auto_phone";
     let written = 0;
+
     for (const r of results || []) {
       if (r.status !== "success" && r.error) continue;
       const c = r.result || {};
-      await supabase.from("contacts").insert({
-        company_id: reqRow.company_id,
-        name: c.full_name || null,
-        title: reqRow.contact_query?.title_wanted || null,
-        linkedin_url: c.linkedin_url || null,
-        email: c.email || null,
-        email_verified_status: c.email_status || "unverified",
-        phone: Array.isArray(c.phones) ? c.phones[0] : c.phone || null,
-        enriched_by: c.provider || "cleanlist",
-      });
-      written++;
+
+      if (mode === "manual_email") {
+        await supabase.from("contacts").update({
+          email: c.email || null,
+          email_verified_status: c.email_status || "unverified",
+        }).eq("id", reqRow.contact_query.contact_id);
+        written++;
+      } else {
+        // auto_phone: create the contact with name + phone + LinkedIn. No email here on purpose.
+        await supabase.from("contacts").insert({
+          company_id: reqRow.company_id,
+          name: c.full_name || null,
+          title: reqRow.contact_query?.title_wanted || null,
+          linkedin_url: c.linkedin_url || null,
+          phone: Array.isArray(c.phones) ? c.phones[0] : c.phone || null,
+          enriched_by: c.provider || "cleanlist",
+        });
+        written++;
+      }
     }
 
     await supabase.from("enrichment_requests").update({
       status: status || "completed", completed_at: new Date().toISOString(),
     }).eq("workflow_id", workflow_id);
 
-    return json({ ok: true, contacts_written: written });
+    return json({ ok: true, mode, contacts_written: written });
   } catch (e) {
     return errorJson(e.message, 500);
   }

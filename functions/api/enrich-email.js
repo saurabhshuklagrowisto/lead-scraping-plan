@@ -4,6 +4,7 @@
 // and UPDATES that same contact row rather than creating a duplicate.
 import { getSupabase, json, errorJson } from "../_lib/supabase.js";
 import { enrichPerson } from "../../lib/integrations/cleanlist.js";
+import { canSpend, recordSpend } from "../_lib/budget.js";
 
 export async function onRequestPost({ request, env }) {
   try {
@@ -15,6 +16,12 @@ export async function onRequestPost({ request, env }) {
     if (error || !contact) return errorJson("contact not found", 404);
     if (contact.email) return json({ ok: true, skipped: true, reason: "this contact already has an email on file — no credit spent" });
 
+    // Manual clicks respect the same governor as auto-enrichment — one shared budget, not two.
+    const budget = await canSpend(supabase, env, "partial_email");
+    if (!budget.ok) {
+      return json({ ok: true, skipped: true, reason: `budget: ${budget.reason} — $${budget.spentWeek.toFixed(2)} spent this week of $${budget.weeklyCapUsd}, try again next cycle` });
+    }
+
     const webhookUrl = `${env.APP_URL}/api/webhooks/enrichment`;
     const params = contact.linkedin_url
       ? { linkedinUrl: contact.linkedin_url, enrichmentType: "partial" }
@@ -22,6 +29,7 @@ export async function onRequestPost({ request, env }) {
           companyName: contact.companies?.name, domain: contact.companies?.domain, enrichmentType: "partial" };
 
     const enrichRes = await enrichPerson(env, params, webhookUrl);
+    await recordSpend(supabase, { companyId: contact.company_id, contactId: contact_id, purpose: "partial_email" });
 
     await supabase.from("enrichment_requests").insert({
       workflow_id: enrichRes.workflow_id,

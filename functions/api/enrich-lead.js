@@ -13,6 +13,7 @@
 //      deferred to the manual button, since the auto process only needs mobile numbers.
 import { getSupabase, json, errorJson } from "../_lib/supabase.js";
 import { enrichCompany, enrichPerson } from "../../lib/integrations/cleanlist.js";
+import { canSpend, recordSpend, CREDITS, CREDIT_COST_USD } from "../_lib/budget.js";
 
 const CONTACT_CAP = { solo_small: 2, mid: 3, billing_rcm: 2, unknown: 1, large: 0 };
 
@@ -41,8 +42,23 @@ export async function onRequestPost({ request, env }) {
     // --- Cost control 2: company confirm only once per company, ever.
     let sizeBand = company.size_band;
     let companyResult = null;
-    if (!company.cleanlist_checked_at) {
+    const needsCompanyConfirm = !company.cleanlist_checked_at;
+
+    // --- Spend governor: check BOTH calls we're about to make against the weekly/monthly cap
+    // before spending anything. $5/week, $20/month, Cleanlist credits at $0.10 each.
+    const phoneBudget = await canSpend(supabase, env, "phone_only");
+    if (needsCompanyConfirm) {
+      const confirmBudget = await canSpend(supabase, env, "company_confirm");
+      if (!confirmBudget.ok || confirmBudget.usd + phoneBudget.usd > phoneBudget.remainingWeek) {
+        return json({ ok: true, skipped: true, reason: `budget: ${confirmBudget.reason || "would exceed"} — $${(confirmBudget.spentWeek + phoneBudget.spentWeek).toFixed(2)} spent this week of $${confirmBudget.weeklyCapUsd}, queued for next cycle` });
+      }
+    } else if (!phoneBudget.ok) {
+      return json({ ok: true, skipped: true, reason: `budget: ${phoneBudget.reason} — $${phoneBudget.spentWeek.toFixed(2)} spent this week of $${phoneBudget.weeklyCapUsd}, queued for next cycle` });
+    }
+
+    if (needsCompanyConfirm) {
       companyResult = await enrichCompany(env, { domain: company.domain, companyName: company.name });
+      await recordSpend(supabase, { companyId: company_id, purpose: "company_confirm" });
       sizeBand = companyResult.company?.employee_count_range ? mapSizeBand(companyResult.company.employee_count_range) : company.size_band;
       const patch = { cleanlist_checked_at: new Date().toISOString() };
       if (sizeBand !== company.size_band) patch.size_band = sizeBand;
@@ -55,6 +71,7 @@ export async function onRequestPost({ request, env }) {
     const title = sizeBand === "mid" ? "Practice Administrator" : "Owner";
     const webhookUrl = `${env.APP_URL}/api/webhooks/enrichment`;
     const enrichRes = await enrichPerson(env, { companyName: company.name, domain: company.domain, enrichmentType: "phone_only" }, webhookUrl);
+    await recordSpend(supabase, { companyId: company_id, purpose: "phone_only" });
 
     // Record the workflow_id BEFORE the webhook can fire, so it's verifiable (Cleanlist doesn't sign webhooks).
     await supabase.from("enrichment_requests").insert({
@@ -67,6 +84,7 @@ export async function onRequestPost({ request, env }) {
     return json({
       ok: true, workflow_id: enrichRes.workflow_id, enrichment_type: "phone_only",
       estimated_credits: companyResult ? 11 : 10,
+      budget_remaining_week_usd: phoneBudget.remainingWeek - phoneBudget.usd - (companyResult ? CREDITS.company_confirm * CREDIT_COST_USD : 0),
       note: "Phone number only. Once the contact's name comes back, use /api/enrich-email (or the dashboard button) to add their email on demand.",
     });
   } catch (e) {

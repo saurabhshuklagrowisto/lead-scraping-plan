@@ -1,0 +1,13 @@
+name: Weekly enrichment (spend the $5/week Cleanlist budget on the best leads first)
+on:
+  schedule:
+    - cron: "0 13 * * 1"   # Mondays 08:00 ET (13:00 UTC), after the weekly-deep re-score
+  workflow_dispatch: {}
+
+jobs:
+  enrich-top-scored:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run the priority enrichment queue against the weekly budget cap
+        run: |
+          curl -s -X POST "${{ secrets.APP_URL }}/api/enrich-queue" -H "x-cron-secret: ${{ secrets.CRON_SECRET }}" || echo "APP_URL not set yet - skipping live enrichment trigger"

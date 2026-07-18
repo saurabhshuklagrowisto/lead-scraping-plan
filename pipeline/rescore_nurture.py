@@ -19,7 +19,9 @@ def main():
     url = os.environ.get("SUPABASE_URL")
     key = os.environ.get("SUPABASE_SERVICE_KEY")
     if not url or not key:
-        sys.exit("SUPABASE_URL / SUPABASE_SERVICE_KEY not set - skipping (safe no-op for local runs)")
+        # Intentional no-op, not a failure: sys.exit(str) would exit 1 and fail the CI job.
+        print("SUPABASE_URL / SUPABASE_SERVICE_KEY not set - skipping (safe no-op)")
+        return
 
     headers = {"apikey": key, "Authorization": f"Bearer {key}", "Content-Type": "application/json"}
 

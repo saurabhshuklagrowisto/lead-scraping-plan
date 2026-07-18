@@ -310,7 +310,7 @@ function Review({fb,setFb}){
       <div className="muted" style=${{marginTop:8}}>Stored and fed to the next learning run as few-shot calibration — no silent retrain.</div></div></div>`;}
 
 function Learning(){
-  const trend=[["TalentBridge",67.2,"var(--red)"],["the staffing seller v1.0",77,"var(--amber)"],["+ learning →",90,"var(--green)"]];
+  const trend=[["the old system",67.2,"var(--red)"],["the staffing seller v1.0",77,"var(--amber)"],["+ learning →",90,"var(--green)"]];
   return html`<div><h2>Learning & Eval</h2>
     <div className="lead">The loop the old app faked: feedback → distilled rules → a candidate that must beat the baseline on the 61 human holdout before it ships.</div>
     <div className="panel"><h3>Agreement with human gold (eval gate)</h3>
@@ -368,7 +368,7 @@ function Benchmark(){
     ["Settings / manual runs","✓","✓"],["Benchmark / accuracy view","✗","✓"],["Mobile-first","✗","✓"],["Run from Claude (MCP)","✗","✓"]];
   return html`<div><h2>Why ours is better</h2>
     <div className="lead">Measured on ${b.sample} real human-rated postings from the old dashboard. Same data — the difference is the objective.</div>
-    <div className="bench"><div className="b old"><div className="muted">Old TalentBridge AI</div><div className="big" style=${{color:"var(--red)"}}>${b.old_agreement}%</div><div className="muted">agreement w/ human gold</div><div style=${{marginTop:10,fontWeight:800,color:"var(--red)"}}>${b.old_lost} leads thrown away</div></div>
+    <div className="bench"><div className="b old"><div className="muted">Old old-system AI</div><div className="big" style=${{color:"var(--red)"}}>${b.old_agreement}%</div><div className="muted">agreement w/ human gold</div><div style=${{marginTop:10,fontWeight:800,color:"var(--red)"}}>${b.old_lost} leads thrown away</div></div>
       <div className="b new"><div className="muted">staffing scorer v1</div><div className="big" style=${{color:"var(--green)"}}>${b.new_agreement}%</div><div className="muted">agreement w/ human gold</div><div style=${{marginTop:10,fontWeight:800,color:"var(--green)"}}>${b.new_lost} leads thrown away</div></div></div>
     <div className="panel" style=${{marginTop:14,borderColor:"var(--green)",background:"var(--green-lt)"}}>
       <div style=${{fontWeight:800,fontSize:15,color:"var(--ink)"}}>What this means for the business</div>

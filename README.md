@@ -2,7 +2,7 @@
 
 An agentic outbound pipeline + mobile command center for a healthcare-staffing agency: scrape US healthcare-admin job postings, score them against the agency's actual buyer ICP, gate on company size for free before spending a credit, enrich, write cluster-routed sequences, and hand booked replies to the sales team — with a feedback → learning → **eval-gated** loop that actually closes.
 
-Built as a demonstrably better rework of an existing open-source outbound dashboard ("TalentBridge"), aligned to a finalized scraping plan (v3).
+Built as a demonstrably better rework of an existing open-source outbound dashboard (the incumbent tool), aligned to a finalized scraping plan (v3).
 
 ---
 
